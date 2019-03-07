@@ -76,4 +76,18 @@ TEMPLATES = [
 
 AUTHENTICATION_BACKENDS = ["wrpt.auth_backends.WrptUserModelBackend"]
 
-django_heroku.settings(locals())
+# To enable debug logging, uncomment the following setting and also
+# change the logging argument to django_heroku.settings to False.
+
+#LOGGING = {
+#  "version": 1,
+#  "disable_existing_loggers": False,
+#  "handlers": {
+#    "console": { "class": "logging.StreamHandler" }
+#  },
+#  "loggers": {
+#    "django": { "handlers": ["console"], "level": "DEBUG" }
+#  }
+#}
+
+django_heroku.settings(locals(), logging=True)
