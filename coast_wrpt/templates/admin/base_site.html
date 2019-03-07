@@ -1,0 +1,37 @@
+{% extends "admin/base_site.html" %}
+
+{% comment %}
+Customization of {django}/contrib/admin/templates/admin/base_site.html.
+{% endcomment %}
+
+{% block title %}COAST Walk &amp; Roll Performance Tracking{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">COAST Walk &amp; Roll Performance Tracking</h1>
+{% endblock %}
+
+{% comment %}
+The following is a copy of the userlinks block as it appears in
+{django}/contrib/admin/templates/admin/base.html with two
+modifications: 1) "View site" renamed to "Return to public site", and
+2) "?next=/" appended to the logout URL, so that logging out takes the
+user back to the site homepage and not to the admin homepage.
+{% endcomment %}
+
+{% load i18n %}
+
+{% block userlinks %}
+    {% if site_url %}
+        <a href="{{ site_url }}">{% trans 'Return to public site' %}</a> /
+    {% endif %}
+    {% if user.is_active and user.is_staff %}
+        {% url 'django-admindocs-docroot' as docsroot %}
+        {% if docsroot %}
+            <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
+        {% endif %}
+    {% endif %}
+    {% if user.has_usable_password %}
+    <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
+    {% endif %}
+    <a href="{% url 'admin:logout' %}?next=/">{% trans 'Log out' %}</a>
+{% endblock %}

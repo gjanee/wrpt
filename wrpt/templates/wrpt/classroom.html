@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% comment %}
+Variables:
+  program = Program
+  classroom = Classroom
+  form = CountForm
+  canSubmit = bool
+  label = "Classroom" or "School"
+  hasData = bool
+  if hasData:
+    data = [{ date: EventDate, count: int|none, absentees: int|none,
+      percentage: int|none }, ...]
+    overall = int
+    tableSlices = [str, ...]
+{% endcomment %}
+
+{% load static %}
+
+{% if hasData %}
+{% block javascript %}
+{% include "wrpt/chart.html" %}
+{% endblock %}
+{% endif %}
+
+{% block breadcrumbs %} &raquo;
+<a href="{% url "program" program.pk %}">{{ program }}</a> &raquo;
+<a href="{% url "classroom" classroom.pk %}">{{ classroom }}</a>{% endblock %}
+
+{% block body %}
+
+<p>Use this form to enter your {{ label|lower }}&rsquo;s Walk &amp;
+Roll participation total for a given event date.  You can also enter
+comments (trend observations, questions, suggestions) if desired.</p>
+
+<form action="{% url "classroom" classroom.pk %}" method="post">
+{% csrf_token %}
+<table class="form">
+<tr><th>Program</th><td>{{ program }}</td></tr>
+<tr><th>Classroom</th><td>{{ classroom }}</td></tr>
+<tr><th>Enrollment</th><td>{{ classroom.enrollment }}</td></tr>
+{% if not canSubmit %}
+<tr>
+<th></th>
+<td>
+{% if user.is_authenticated %}
+<span class="note">You are not authorized to enter counts for this
+school.</span>
+{% else %}
+<span class="note">You must
+<a href="{% url "login" %}?next={{ request.path }}">login</a> to enter
+a count.</span>
+{% endif %}
+</td>
+</tr>
+{% endif %}
+<tr>
+<th>Event date</th>
+<td>
+{{ form.eventDate }}
+{% if form.eventDate.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.eventDate.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+{% if program.splitCounts %}
+<tr>
+<th class="thgroup">Participant<br/>counts</th>
+<td>
+<table class="form">
+<tr>
+<th>Walk/bike/scooter/etc</th>
+<td>
+{{ form.activeValue }}
+{% if form.activeValue.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.activeValue.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+<tr>
+<th>Carpool/bus</th>
+<td>
+{{ form.inactiveValue }}
+{% if form.inactiveValue.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.inactiveValue.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+</table>
+</td>
+</tr>
+{% else %}
+<tr>
+<th>Participants</th>
+<td>
+{{ form.value }}
+{% if form.value.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.value.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+{% endif %}
+<tr>
+<th>Absentees</th>
+<td>
+{{ form.absentees }}
+{% if form.absentees.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.absentees.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+<tr>
+<th>Comments</th>
+<td>
+{{ form.comments }}
+{% if form.comments.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.comments.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+<tr>
+<th></th>
+<td>
+<input type="submit" value="Submit"
+{% if not canSubmit %}disabled="disabled"{% endif %}/>
+{% if form.non_field_errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.non_field_errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+{% if messages %}
+<img src="{% static "wrpt/icon_success.gif" %}" alt="success"/>
+{% for m in messages %}
+<span class="note">{{ m }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+</table>
+</form>
+
+<p>
+{% if program.splitCounts %}
+For &ldquo;Participant counts&rdquo; enter the number of students who
+used some form of active transportation (walking, biking, etc.) to get
+to school on the Walk &amp; Roll event date, and separately the number
+of students who carpooled (2 students or more) or took the bus.
+{% else %}
+&ldquo;Participants&rdquo; is the total number of students who walked,
+biked, skateboarded, scootered, took the bus or carpooled (2 students
+or more) to school on the Walk &amp; Roll event date.
+{% endif %}
+&ldquo;Absentees&rdquo; is the number of students absent that day.
+<strong>Please enter numeric values.</strong>
+</p>
+
+<p>If the data you submitted is not correct or needs to be updated,
+re-enter the correct value, then re-submit.</p>
+
+<p>Thank you for participating!</p>
+
+<h2>Performance to date</h2>
+
+{% if hasData %}
+
+{% for slice in tableSlices %}
+<table class="table-header-rotated">
+<tr>
+<th></th>
+{% for d in data|slice:slice %}
+{% comment %}
+The <div><span>...</span></div> goofiness is necessary for the styling
+to work.
+{% endcomment %}
+<th class="rotate-45"><div><span>{{ d.date }}</span></div></th>
+{% endfor %}
+</tr>
+<tr>
+<th class="left-header">Participants</th>
+{% for d in data|slice:slice %}
+<td>{% if d.count != None %}{{ d.count }}{% endif %}</td>
+{% endfor %}
+</tr>
+<tr>
+<th class="left-header">Absentees</th>
+{% for d in data|slice:slice %}
+<td>{% if d.absentees != None %}{{ d.absentees }}{% endif %}</td>
+{% endfor %}
+</tr>
+<tr>
+<th class="left-header">%</th>
+{% for d in data|slice:slice %}
+<td>{% if d.percentage != None %}{{ d.percentage }}{% endif %}</td>
+{% endfor %}
+</tr>
+</table>
+{% endfor %}
+
+<p>Total participation to date: {{ overall }}%</p>
+
+<div id="chart"></div>
+
+{% else %}
+
+<p>None.</p>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,2 @@
+/* Hide "View on site" link. */
+.object-tools a.viewsitelink { display: none }

@@ -1,0 +1,141 @@
+body {
+  background-color: #F2F5F8;
+  color: #00395C;
+  font-family: arial, sans-serif;
+  font-size: 80%;
+  line-height: 1.6;
+}
+
+#body {
+  width: 90%;
+  margin: 2em auto;
+}
+
+#header {
+  width: 100%;
+}
+
+#header tr {
+  vertical-align: top;
+}
+
+h1 {
+  color: #349747;
+  font-size: 1.5em;
+  font-weight: normal;
+  margin-top: 1em;
+  border-bottom: 1px solid #C6CBD1;
+}
+
+h2 {
+  color: #278ECD;
+  font-size: 1.2em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #C6CBD1;
+}
+
+#breadcrumbs {
+  font-weight: bold;
+}
+
+span.note {
+  color: #349747;
+}
+
+span.error {
+  color: red;
+}
+
+table.form th {
+  text-align: right;
+  padding-right: .5em;
+  border-right: 1px solid #DDDDDD;
+}
+
+table.form th.thgroup {
+  border-right: 2px solid #00395C;
+}
+
+table.form td {
+  padding-left: .5em;
+}
+
+#chart {
+  margin-top: 2em;
+  height: 500px;
+}
+
+/* Table header rotation courtesy of
+** http://jimmybonney.com/articles/column_header_rotation_css/
+*/
+
+.table-header-rotated th.row-header {
+  width: auto;
+}
+
+.table-header-rotated td {
+  border-top: 1px solid #DDDDDD;
+  border-left: 1px solid #DDDDDD;
+  border-right: 1px solid #DDDDDD;
+  border-bottom: 1px solid #DDDDDD;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.table-header-rotated th.rotate-45 {
+  height: 70px;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  position: relative;
+  vertical-align: bottom;
+  padding: 0;
+  font-size: 12px;
+  line-height: 0.8;
+}
+
+.table-header-rotated th.rotate-45 > div {
+  position: relative;
+  top: 0px;
+  left: 35px;
+  height: 100%;
+  -ms-transform:skew(-45deg,0deg);
+  -moz-transform:skew(-45deg,0deg);
+  -webkit-transform:skew(-45deg,0deg);
+  -o-transform:skew(-45deg,0deg);
+  transform:skew(-45deg,0deg);
+  overflow: hidden;
+  border-left: 1px solid #DDDDDD;
+  border-right: 1px solid #DDDDDD;
+  border-top: 1px solid #DDDDDD;
+}
+
+.table-header-rotated th.rotate-45 span {
+  -ms-transform:skew(45deg,0deg) rotate(315deg);
+  -moz-transform:skew(45deg,0deg) rotate(315deg);
+  -webkit-transform:skew(45deg,0deg) rotate(315deg);
+  -o-transform:skew(45deg,0deg) rotate(315deg);
+  transform:skew(45deg,0deg) rotate(315deg);
+  position: absolute;
+  bottom: 30px;
+  left: -25px;
+  display: inline-block;
+  width: 85px;
+  text-align: left;
+}
+
+/* Some additional styling on the table... */
+
+.table-header-rotated th.left-header {
+  font-weight: normal;
+  text-align: right;
+}
+
+.table-header-rotated th.overall-row {
+  font-weight: bold;
+}
+
+.table-header-rotated td.overall-row {
+  font-weight: bold;
+  border-color: green;
+}

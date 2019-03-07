@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% if hasData %}
+{% block javascript %}
+{% include "wrpt/chart.html" with label="School" data=schoolData %}
+{% endblock %}
+{% endif %}
+
+{% block breadcrumbs %} &raquo;
+<a href="{% url "program" program.pk %}">{{ program }}</a>{% endblock %}
+
+{% block body %}
+
+{% block subbody %}{% endblock %}
+
+<h2>Performance to date</h2>
+
+{% if hasData %}
+{% block table %}{% endblock %}
+<div id="chart"></div>
+{% else %}
+<p>None.</p>
+{% endif %}
+
+{% endblock %}

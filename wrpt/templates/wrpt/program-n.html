@@ -1,0 +1,97 @@
+{% extends "wrpt/program.html" %}
+
+{% comment %}
+Template for a program with 2+ classrooms.
+Variables:
+  program = Program
+  totalEnrollment = int
+  classrooms = [Classroom, ...]
+  hasData = bool
+  if hasData:
+    dates = [EventDate, ...]
+    schoolData = [{ date: EventDate, percentage: int|none }, ...]
+    classroomData = [{ classroom: Classroom,
+      data: [{ date: EventDate, percentage: int|none }, ...],
+      overall: int }, ...]
+    tableSlices = [str, ...]
+{% endcomment %}
+
+{% block subbody %}
+
+<p>Select a classroom below to view or update the participation by
+that classroom.</p>
+
+<table class="form">
+<tr><th>Program</th><td>{{ program }}</td></tr>
+<tr><th>Enrollment</th><td>{{ totalEnrollment }}</td></tr>
+<tr>
+<th>Participation goal</th>
+<td>
+{% if program.participationGoal != None %}
+{{ program.participationGoal }}%
+{% else %}
+-
+{% endif %}
+</td>
+</tr>
+<tr>
+<th style="vertical-align: baseline">Classrooms</th>
+<td>
+{% for c in classrooms %}
+<a href="{% url "classroom" c.pk %}">{{ c }}</a><br/>
+{% endfor %}
+</td>
+</tr>
+</table>
+
+{% endblock %}
+
+{% block table %}
+
+<p>All numbers below are <strong>percentages</strong> of the school or
+classroom enrollment as appropriate.</p>
+
+{% for slice in tableSlices %}
+<table class="table-header-rotated">
+<tr>
+<th></th>
+<th></th>
+{% for d in dates|slice:slice %}
+{% comment %}
+The <div><span>...</span></div> goofiness is necessary for the styling
+to work.
+{% endcomment %}
+<th class="rotate-45"><div><span>{{ d.date }}</span></div></th>
+{% endfor %}
+{% if forloop.last %}
+<th class="rotate-45"><div><span>Total to date</span></div></th>
+{% endif %}
+</tr>
+<tr>
+<th class="left-header overall-row">Overall</th>
+<th class="left-header overall-row">%</th>
+{% for d in schoolData|slice:slice %}
+<td class="overall-row">
+{% if d.percentage != None %}{{ d.percentage }}{% endif %}
+</td>
+{% endfor %}
+{% if forloop.last %}
+<td class="overall-row"></td>
+{% endif %}
+</tr>
+{% for r in classroomData %}
+<tr>
+<th class="left-header">{{ r.classroom }}</th>
+<th class="left-header">%</th>
+{% for c in r.data|slice:slice %}
+<td>{% if c.percentage != None %}{{ c.percentage }}{% endif %}</td>
+{% endfor %}
+{% if forloop.parentloop.last %}
+<td class="overall-row">{{ r.overall }}</td>
+{% endif %}
+</tr>
+{% endfor %}
+</table>
+{% endfor %}
+
+{% endblock %}

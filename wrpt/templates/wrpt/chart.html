@@ -1,0 +1,50 @@
+{% comment %}
+Variables:
+  label = str
+  data = [{ date: str, percentage: int|none }, ...]
+  program.participationGoal = int|none
+{% endcomment %}
+
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">//<![CDATA[
+
+google.load("visualization", "1.0", { packages: ["corechart"] });
+google.setOnLoadCallback(drawChart);
+
+function drawChart () {
+
+  var data = google.visualization.arrayToDataTable([
+    ["Event date",
+     {% if program.participationGoal != None %}"Goal",{% endif %}
+     "{{ label }} percentage"],
+{% for d in data %}
+["{{ d.date|escapejs }}",
+{% if program.participationGoal != None %}
+{{ program.participationGoal }},
+{% endif %}
+{% if d.percentage != None %}
+{{ d.percentage }}
+{% else %}
+null
+{% endif %}]{% if not forloop.last %},{% endif %}
+{% endfor %}
+  ]);
+
+  var options = {
+    backgroundColor: { fill: "#F2F5F8", strokeWidth: 2 },
+    hAxis: { title: "Event date" },
+    vAxis: { title: "{{ label }} percentage", minValue: 0, maxValue: 100 },
+    series: [
+      {% if program.participationGoal != None %}{ color: "green" },{% endif %}
+      { color: "red", visibleInLegend: false }
+    ]
+  };
+
+  var chart = new google.visualization.LineChart(
+    document.getElementById("chart"));
+
+  chart.draw(data, options);
+
+}
+
+//]]></script>

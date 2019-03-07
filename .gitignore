@@ -1,0 +1,7 @@
+*.pyc
+*~
+.env
+db.sqlite3
+venv
+staticfiles/*
+!staticfiles/.keep

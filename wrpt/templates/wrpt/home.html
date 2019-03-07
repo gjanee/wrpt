@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body %}
+
+<p>The <strong><em>Walk &amp; Roll To School Challenge</em></strong>
+is a fun program brought to you by {% include "sponsor.html" %} that
+is implemented by a school&rsquo;s leadership class or by the
+school&rsquo;s Safe Routes to School (SR2S) parent
+&ldquo;champion.&rdquo; It encourages students to walk, bike, scooter,
+bus, or carpool to school at least one day a week throughout the
+school year.  It can be organized as a competition, with classrooms
+competing to see which can achieve the highest rate of participation.
+Hosting a Walk &amp; Roll To School Challenge promotes fun, healthy
+and earth-friendly ways of getting to school!</p>
+
+<p>This website can be used by schools to record participation
+rates.</p>
+
+<p style="text-align: center"><img
+src="{% static "wrpt/walk-roll-logo.png" %}" alt="logo"/></p>
+
+<h2>Current programs</h2>
+
+{% if currentPrograms|length > 0 %}
+<ul>
+{% for p in currentPrograms %}
+<li><a href="{% url "program" p.pk %}">{{ p }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+
+<h2>Past programs</h2>
+
+{% if pastPrograms|length > 0 %}
+<ul>
+{% for p in pastPrograms %}
+<li><a href="{% url "program" p.pk %}">{{ p }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}
