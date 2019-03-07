@@ -8,7 +8,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.gzip import gzip_page
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import get_object_or_404, render, redirect
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
 
@@ -45,7 +45,8 @@ def formCanBeSubmitted (user, classroom):
 def home (request):
   current = []
   past = []
-  for p in Program.objects.all().order_by("school__name", "-schoolYear"):
+  for p in Program.objects.all().select_related("school")\
+    .order_by("-schoolYear", "school__name"):
     if p.isViable():
       if p.isCurrent():
         current.append(p)
@@ -58,7 +59,8 @@ def addClassroomData (context, classroom, dataKey):
   dates = EventDate.objects.filter(
     schedule=classroom.program.schedule).order_by("seq")
   map = dict((c.eventDate.pk, (c.value, c.absentees))\
-    for c in Count.objects.filter(classroom=classroom))
+    for c in Count.objects.filter(classroom=classroom)\
+    .select_related("eventDate"))
   context["hasData"] = (len(map) > 0)
   if context["hasData"]:
     data = []
@@ -90,7 +92,11 @@ def addClassroomData (context, classroom, dataKey):
     context["tableSlices"] = slices
 
 def classroom (request, id):
-  classroom = get_object_or_404(Classroom, pk=id)
+  try:
+    classroom = Classroom.objects.select_related("program",
+      "program__school", "program__schedule").get(pk=id)
+  except Classroom.DoesNotExist:
+    raise Http404
   canSubmit = formCanBeSubmitted(request.user, classroom)
   if request.method == "POST":
     # Should never happen.
@@ -184,7 +190,8 @@ def addProgramData (context, program, classrooms, totalEnrollment):
   dates = EventDate.objects.filter(
     schedule=program.schedule).order_by("seq")
   map = dict(((c.classroom.pk, c.eventDate.pk), (c.value, c.absentees))\
-    for c in Count.objects.filter(program=program))
+    for c in Count.objects.filter(program=program)\
+    .select_related("classroom", "eventDate"))
   context["hasData"] = (len(map) > 0)
   if context["hasData"]:
     context["dates"] = dates
@@ -235,7 +242,10 @@ def addProgramData (context, program, classrooms, totalEnrollment):
     context["tableSlices"] = slices
 
 def program (request, id):
-  program = get_object_or_404(Program, pk=id)
+  try:
+    program = Program.objects.select_related("school", "schedule").get(pk=id)
+  except Program.DoesNotExist:
+    raise Http404
   classrooms = Classroom.objects.filter(program=program).order_by("name")
   if len(classrooms) == 0:
     raise Http404
@@ -256,13 +266,9 @@ def dumpCounts (request):
   w = csv.writer(s)
   w.writerow(["program", "eventDate", "classroom", "enrollment", "value",
     "activeValue", "inactiveValue", "absentees", "comments"])
-  last_id = -1
-  while True:
-    counts = list(Count.objects.filter(id__gt=last_id).order_by("id")[:100])
-    if len(counts) == 0: break
-    for c in counts:
-      w.writerow([c.program, c.eventDate.date, c.classroom.name,
-        c.classroom.enrollment, c.value, c.activeValue, c.inactiveValue,
-        c.absentees, c.comments])
-    last_id = counts[-1].id
+  for c in Count.objects.all().select_related("program", "program__school",
+    "eventDate", "classroom"):
+    w.writerow([c.program, c.eventDate.date, c.classroom.name,
+      c.classroom.enrollment, c.value, c.activeValue, c.inactiveValue,
+      c.absentees, c.comments])
   return HttpResponse(s.getvalue(), content_type="text/plain; charset=UTF-8")
