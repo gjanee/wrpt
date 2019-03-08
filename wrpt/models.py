@@ -33,35 +33,18 @@ class Schedule (models.Model):
 class EventDate (models.Model):
   # A Walk&Roll event date belonging to a schedule.
   schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
-  date = models.CharField(max_length=10, validators=[notBlankValidator],
-    help_text="Ex: Jan, Apr #2, Mar 17")
-  seq = models.IntegerField(blank=True,
-    help_text="Defines the order of dates in the schedule; " +\
-    "leave blank to order as given")
+  date = models.DateField()
   def clean (self):
-    self.date = self.date.strip()
     if self.pk != None:
       # This event date's schedule can't be changed if any counts
       # refer to this event date, but for simplicity we just disallow
       # all schedule changes.
       if self.schedule != EventDate.objects.get(pk=self.pk).schedule:
         raise ValidationError("Schedule cannot be changed.")
-  def save (self, *args, **kwargs):
-    if self.seq == None:
-      m = EventDate.objects.filter(schedule=self.schedule)\
-        .aggregate(models.Max("seq"))["seq__max"] or 0
-      self.seq = m + 1
-    super().save(*args, **kwargs)
   def __str__ (self):
-    return self.date
+    return re.sub(r"0(\d)", "\\1", self.date.strftime("%b %d"))
   class Meta:
     unique_together = ("schedule", "date")
-    # It should also be true that the pair (schedule, seq) is unique,
-    # but we don't enforce that.  The intention of exposing the seq
-    # field is to support after-the-fact reordering of event dates
-    # within a schedule, but due to the way the Django admin forms
-    # work, if the constraint is enforced it becomes virtually
-    # impossible to change the ordering.
 
 class School (models.Model):
   # A school.

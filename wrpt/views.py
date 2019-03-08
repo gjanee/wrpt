@@ -15,20 +15,11 @@ from django.db.models import Sum
 import csv
 import datetime
 import io
-import time
 
 from wrpt.models import Classroom, Count, EventDate, Program
 from wrpt.forms import CountForm
 
 maximumTableWidth = 20 # columns
-
-def dateIsInPast (date):
-  try:
-    st = time.strptime(date, "%m/%d/%Y")
-    return (datetime.date(st.tm_year, st.tm_mon, st.tm_mday) <=\
-      datetime.date.today())
-  except:
-    return False
 
 def percentage (m, n, a):
   # Returns m/(n-a) as an integer percentage, safely.
@@ -57,7 +48,7 @@ def home (request):
 
 def addClassroomData (context, classroom, dataKey):
   dates = EventDate.objects.filter(
-    schedule=classroom.program.schedule).order_by("seq")
+    schedule=classroom.program.schedule).order_by("date")
   map = dict((c.eventDate.pk, (c.value, c.absentees))\
     for c in Count.objects.filter(classroom=classroom)\
     .select_related("eventDate"))
@@ -74,7 +65,7 @@ def addClassroomData (context, classroom, dataKey):
       else:
         data.append({ "date": date, "count": None, "absentees": None,
           "percentage": None })
-      if dateIsInPast(date.date):
+      if date.date <= datetime.date.today():
         if date.pk in map:
           d = max(classroom.enrollment-map[date.pk][1], 0)
           overall[0] += min(map[date.pk][0], d)
@@ -188,7 +179,7 @@ def classroom (request, id):
 
 def addProgramData (context, program, classrooms, totalEnrollment):
   dates = EventDate.objects.filter(
-    schedule=program.schedule).order_by("seq")
+    schedule=program.schedule).order_by("date")
   map = dict(((c.classroom.pk, c.eventDate.pk), (c.value, c.absentees))\
     for c in Count.objects.filter(program=program)\
     .select_related("classroom", "eventDate"))
@@ -214,7 +205,7 @@ def addProgramData (context, program, classrooms, totalEnrollment):
               overall[d.pk][1]+map[(c.pk, d.pk)][1])
         else:
           data.append({ "date": d, "count": None, "percentage": None })
-        if dateIsInPast(d.date):
+        if d.date <= datetime.date.today():
           if (c.pk, d.pk) in map:
             e = max(c.enrollment-map[(c.pk, d.pk)][1], 0)
             classroomOverall[0] += min(map[(c.pk, d.pk)][0], e)

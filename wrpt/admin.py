@@ -39,7 +39,7 @@ class SchoolAdmin (admin.ModelAdmin):
 
 class EventDateInline (admin.TabularInline):
   model = EventDate
-  ordering = ["seq"]
+  ordering = ["date"]
   def get_extra (self, request, obj=None, **kwargs):
     # If creating a schedule, provide 10 blank date forms; if changing
     # an existing schedule, provide none.
@@ -132,11 +132,11 @@ class CountAdmin (admin.ModelAdmin):
       "value", "activeValue", "inactiveValue", "absentees", "comments") }),
   )
   ordering = ["-program__schoolYear", "program__school__name",
-    "-eventDate__seq", "classroom__name"]
+    "-eventDate__date", "classroom__name"]
   list_display = ["__str__", "comments"]
   list_filter = (ProgramFilter,)
   search_fields = ["program__schoolYear", "program__school__name",
-    "eventDate__date", "classroom__name", "comments"]
+    "classroom__name", "comments"]
   form = CountForm
   # To properly support count creation in the admin, we would need to
   # dynamically adjust the event date and classroom menus in response
@@ -152,7 +152,7 @@ class CountAdmin (admin.ModelAdmin):
   def formfield_for_foreignkey (self, db_field, request, **kwargs):
     if db_field.name == "eventDate":
       kwargs["queryset"] = EventDate.objects.filter(
-        schedule=self.the_count.program.schedule).order_by("seq")
+        schedule=self.the_count.program.schedule).order_by("date")
     elif db_field.name == "classroom":
       kwargs["queryset"] = Classroom.objects.filter(
         program=self.the_count.program).order_by("name")

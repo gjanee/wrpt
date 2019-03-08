@@ -26,7 +26,7 @@ class CountForm (forms.Form):
     canSubmit = kwargs.pop("canSubmit")
     super().__init__(*args, **kwargs)
     self.fields["eventDate"].queryset = EventDate.objects.filter(
-      schedule=self.classroom.program.schedule).order_by("seq")
+      schedule=self.classroom.program.schedule).order_by("date")
     if not canSubmit:
       self.fields["eventDate"].widget.attrs["disabled"] = "disabled"
       self.fields["value"].widget.attrs["disabled"] = "disabled"
