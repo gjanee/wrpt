@@ -108,6 +108,8 @@ class CountForm (ModelForm):
   # modified count continues to satisfy the uniqueness constraint.
   def clean (self):
     super().clean()
+    # Bail out if there are already individual field errors.
+    if len(self.errors.as_data()) > 0: return
     i = self.instance
     edc = "eventDate" in self.changed_data
     cc = "classroom" in self.changed_data
@@ -128,7 +130,7 @@ class CountAdmin (admin.ModelAdmin):
   # Making a field readonly messes with the field order, so define a
   # fieldset to restore the order.
   fieldsets = (
-    (None, { "fields": ("program", "eventDate", "classroom",
+    (None, { "fields": ("program", "eventDate", "classroom", "enrollment",
       "value", "activeValue", "inactiveValue", "absentees", "comments") }),
   )
   ordering = ["-program__schoolYear", "program__school__name",

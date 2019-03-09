@@ -12,6 +12,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
 
+from collections import namedtuple
 import csv
 import datetime
 import io
@@ -47,9 +48,10 @@ def home (request):
     "pastPrograms": past })
 
 def addClassroomData (context, classroom, dataKey):
+  Datum = namedtuple("Datum", ["enrollment", "value", "absentees"])
   dates = EventDate.objects.filter(
     schedule=classroom.program.schedule).order_by("date")
-  map = dict((c.eventDate.pk, (c.value, c.absentees))\
+  map = dict((c.eventDate.pk, Datum(c.enrollment, c.value, c.absentees))\
     for c in Count.objects.filter(classroom=classroom)\
     .select_related("eventDate"))
   context["hasData"] = (len(map) > 0)
@@ -58,19 +60,16 @@ def addClassroomData (context, classroom, dataKey):
     overall = [0, 0] # numerator, denominator
     for date in dates:
       if date.pk in map:
-        data.append({ "date": date, "count": map[date.pk][0],
-          "absentees": map[date.pk][1],
-          "percentage": percentage(map[date.pk][0], classroom.enrollment,
-          map[date.pk][1]) })
+        d = map[date.pk]
+        data.append({ "date": date, "count": d.value, "absentees": d.absentees,
+          "percentage": percentage(d.value, d.enrollment, d.absentees) })
+        if date.date <= datetime.date.today():
+          overall[0] += d.value
+          overall[1] += d.enrollment - d.absentees
       else:
         data.append({ "date": date, "count": None, "absentees": None,
           "percentage": None })
-      if date.date <= datetime.date.today():
-        if date.pk in map:
-          d = max(classroom.enrollment-map[date.pk][1], 0)
-          overall[0] += min(map[date.pk][0], d)
-          overall[1] += d
-        else:
+        if date.date <= datetime.date.today():
           overall[1] += classroom.enrollment
     context[dataKey] = data
     context["overall"] = percentage(overall[0], overall[1], 0)
@@ -97,72 +96,32 @@ def classroom (request, id):
       try:
         c = Count.objects.get(program=classroom.program,
           eventDate=form.cleaned_data["eventDate"], classroom=classroom)
-        if form.cleaned_data["absentees"] != None:
-          c.absentees = min(form.cleaned_data["absentees"],
-            classroom.enrollment)
+        if form.cleaned_data["value"] != None:
+          c.enrollment = form.cleaned_data["enrollment"]
+          c.value = form.cleaned_data["value"]
+          c.activeValue = form.cleaned_data["activeValue"]
+          c.inactiveValue = form.cleaned_data["inactiveValue"]
+          c.absentees = form.cleaned_data["absentees"]
+          c.comments = form.cleaned_data["comments"]
+          c.save()
+          messages.success(request, "Count updated.")
         else:
-          c.absentees = 0
-        c.comments = form.cleaned_data["comments"]
-        if classroom.program.splitCounts:
-          if form.cleaned_data["activeValue"] != None or\
-            form.cleaned_data["inactiveValue"] != None:
-            c.activeValue = min(form.cleaned_data["activeValue"] or 0,
-              classroom.enrollment-c.absentees)
-            c.inactiveValue = min(form.cleaned_data["inactiveValue"] or 0,
-              classroom.enrollment-c.absentees)
-            c.value = min(c.activeValue+c.inactiveValue,
-              classroom.enrollment-c.absentees)
-            c.save()
-            messages.success(request, "Count updated.")
-          else:
-            c.delete()
-            messages.success(request, "Count deleted.")
-        else:
-          if form.cleaned_data["value"] != None:
-            c.value = min(form.cleaned_data["value"],
-              classroom.enrollment-c.absentees)
-            c.save()
-            messages.success(request, "Count updated.")
-          else:
-            c.delete()
-            messages.success(request, "Count deleted.")
+          c.delete()
+          messages.success(request, "Count deleted.")
       except Count.DoesNotExist:
-        if form.cleaned_data["absentees"] != None:
-          absentees = min(form.cleaned_data["absentees"],
-            classroom.enrollment)
+        if form.cleaned_data["value"] != None:
+          c = Count(program=classroom.program,
+            eventDate=form.cleaned_data["eventDate"], classroom=classroom,
+            enrollment=form.cleaned_data["enrollment"],
+            value=form.cleaned_data["value"],
+            activeValue=form.cleaned_data["activeValue"],
+            inactiveValue=form.cleaned_data["inactiveValue"],
+            absentees=form.cleaned_data["absentees"],
+            comments=form.cleaned_data["comments"])
+          c.save()
+          messages.success(request, "Count saved.")
         else:
-          absentees = 0
-        if classroom.program.splitCounts:
-          if form.cleaned_data["activeValue"] != None or\
-            form.cleaned_data["inactiveValue"] != None:
-            activeValue = min(form.cleaned_data["activeValue"] or 0,
-              classroom.enrollment-absentees)
-            inactiveValue = min(form.cleaned_data["inactiveValue"] or 0,
-              classroom.enrollment-absentees)
-            c = Count(program=classroom.program,
-              eventDate=form.cleaned_data["eventDate"], classroom=classroom,
-              value=min(activeValue+inactiveValue,
-              classroom.enrollment-absentees),
-              activeValue=activeValue, inactiveValue=inactiveValue,
-              absentees=absentees,
-              comments=form.cleaned_data["comments"])
-            c.save()
-            messages.success(request, "Count saved.")
-          else:
-            messages.success(request, "Did you mean to supply a count?")
-        else:
-          if form.cleaned_data["value"] != None:
-            c = Count(program=classroom.program,
-              eventDate=form.cleaned_data["eventDate"], classroom=classroom,
-              value=min(form.cleaned_data["value"],
-              classroom.enrollment-absentees),
-              activeValue=None, inactiveValue=None,
-              absentees=absentees,
-              comments=form.cleaned_data["comments"])
-            c.save()
-            messages.success(request, "Count saved.")
-          else:
-            messages.success(request, "Did you mean to supply a count?")
+          messages.success(request, "Did you mean to supply a count?")
       return HttpResponseRedirect(request.path)
   else:
     form = CountForm(classroom=classroom, canSubmit=canSubmit)
@@ -177,52 +136,50 @@ def classroom (request, id):
   addClassroomData(context, classroom, "data")
   return render(request, "wrpt/classroom.html", context)
 
-def addProgramData (context, program, classrooms, totalEnrollment):
+def addProgramData (context, program, classrooms):
+  Datum = namedtuple("Datum", ["enrollment", "value", "absentees"])
   dates = EventDate.objects.filter(
     schedule=program.schedule).order_by("date")
-  map = dict(((c.classroom.pk, c.eventDate.pk), (c.value, c.absentees))\
-    for c in Count.objects.filter(program=program)\
+  map = dict(((c.classroom.pk, c.eventDate.pk), Datum(c.enrollment,
+    c.value, c.absentees)) for c in Count.objects.filter(program=program)\
     .select_related("classroom", "eventDate"))
   context["hasData"] = (len(map) > 0)
   if context["hasData"]:
     context["dates"] = dates
     # Note that in computing overall counts and percentages we're
     # careful to distinguish 0 from None (i.e., no data).
-    overall = dict((d.pk, None) for d in dates)
+    overall = dict((d.pk, Datum(0, 0, 0)) for d in dates)
     classroomData = []
     for c in classrooms:
       data = []
       classroomOverall = [0, 0] # numerator, denominator
-      for d in dates:
-        if (c.pk, d.pk) in map:
-          data.append({ "date": d, "count": map[(c.pk, d.pk)][0],
-            "percentage": percentage(map[(c.pk, d.pk)][0], c.enrollment,
-            map[(c.pk, d.pk)][1]) })
-          if overall[d.pk] == None:
-            overall[d.pk] = map[(c.pk, d.pk)]
-          else:
-            overall[d.pk] = (overall[d.pk][0]+map[(c.pk, d.pk)][0],
-              overall[d.pk][1]+map[(c.pk, d.pk)][1])
+      for date in dates:
+        if (c.pk, date.pk) in map:
+          d = map[(c.pk, date.pk)]
+          data.append({ "date": date,
+            "percentage": percentage(d.value, d.enrollment, d.absentees) })
+          if date.date <= datetime.date.today():
+            classroomOverall[0] += d.value
+            classroomOverall[1] += d.enrollment - d.absentees
+            overall[date.pk] = Datum(overall[date.pk][0]+d[0],
+              overall[date.pk][1]+d[1], overall[date.pk][2]+d[2])
         else:
-          data.append({ "date": d, "count": None, "percentage": None })
-        if d.date <= datetime.date.today():
-          if (c.pk, d.pk) in map:
-            e = max(c.enrollment-map[(c.pk, d.pk)][1], 0)
-            classroomOverall[0] += min(map[(c.pk, d.pk)][0], e)
-            classroomOverall[1] += e
-          else:
+          data.append({ "date": date, "percentage": None })
+          if date.date <= datetime.date.today():
             classroomOverall[1] += c.enrollment
+            overall[date.pk] = Datum(overall[date.pk][0]+c.enrollment,
+              overall[date.pk][1], overall[date.pk][2])
       classroomData.append({ "classroom": c, "data": data,
         "overall": percentage(classroomOverall[0], classroomOverall[1], 0) })
     context["classroomData"] = classroomData
     data = []
     for d in dates:
-      if overall[d.pk] != None:
-        data.append({ "date": d, "count": overall[d.pk][0],
-          "percentage": percentage(overall[d.pk][0], totalEnrollment,
-          overall[d.pk][1]) })
+      if d.date <= datetime.date.today():
+        data.append({ "date": d,
+          "percentage": percentage(overall[d.pk].value,
+          overall[d.pk].enrollment, overall[d.pk].absentees) })
       else:
-        data.append({ "date": d, "count": None, "percentage": None })
+        data.append({ "date": d, "percentage": None })
     context["schoolData"] = data
     # It's a pain to do slicing inside templates, so compute the table
     # slices here.
@@ -247,7 +204,7 @@ def program (request, id):
       classrooms.aggregate(Sum("enrollment"))["enrollment__sum"]
     context = { "program": program, "classrooms": classrooms,
       "totalEnrollment": totalEnrollment }
-    addProgramData(context, program, classrooms, totalEnrollment)
+    addProgramData(context, program, classrooms)
     return render(request, "wrpt/program-n.html", context)
 
 @staff_member_required
@@ -260,6 +217,6 @@ def dumpCounts (request):
   for c in Count.objects.all().select_related("program", "program__school",
     "eventDate", "classroom"):
     w.writerow([c.program, c.eventDate.date, c.classroom.name,
-      c.classroom.enrollment, c.value, c.activeValue, c.inactiveValue,
+      c.enrollment, c.value, c.activeValue, c.inactiveValue,
       c.absentees, c.comments])
   return HttpResponse(s.getvalue(), content_type="text/plain; charset=UTF-8")

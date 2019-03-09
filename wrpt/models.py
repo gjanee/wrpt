@@ -158,14 +158,18 @@ class Count (models.Model):
   # A count of students for a classroom on an event date.  Depending
   # on the program configuration, the count may be a single value
   # ('value') or a pair of values (activeValue and inactiveValue); in
-  # the latter case, 'value' holds the total.  At creation time the
-  # total value plus absentee count is not allowed to exceed the
-  # classroom's enrollment, but that property may later fail to be
-  # true if the enrollment is subsequently changed.
+  # the latter case, 'value' holds the total.  The sum of 'value' and
+  # absentees is not permitted to exceed the classroom enrollment on
+  # the event date.
   program = models.ForeignKey(Program, on_delete=models.CASCADE)
   eventDate = models.ForeignKey(EventDate, on_delete=models.CASCADE,
     verbose_name="Event date")
   classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE)
+  # The classroom has a nominal enrollment, but the enrollment often
+  # changes slightly over time, so we record the enrollment's value on
+  # the event date.
+  enrollment = models.IntegerField(validators=[MinValueValidator(1)],
+    help_text="Classroom enrollment on the event date")
   value = models.IntegerField(blank=True, null=True,
     validators=[MinValueValidator(0)],
     help_text="Total number of students who took alternative transportation")
@@ -204,6 +208,9 @@ class Count (models.Model):
       if self.inactiveValue != None:
         e["inactiveValue"] = "This field must be left empty."
       if len(e) > 0: raise ValidationError(e)
+    if self.value+self.absentees > self.enrollment:
+      raise ValidationError(
+        "Participants plus absentees exceeds classroom enrollment.")
   def __str__ (self):
     return "(%s, %s, %s)" % (self.program, self.eventDate,
       self.classroom)

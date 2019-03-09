@@ -38,7 +38,6 @@ comments (trend observations, questions, suggestions) if desired.</p>
 <table class="form">
 <tr><th>Program</th><td>{{ program }}</td></tr>
 <tr><th>Classroom</th><td>{{ classroom }}</td></tr>
-<tr><th>Enrollment</th><td>{{ classroom.enrollment }}</td></tr>
 {% if not canSubmit %}
 <tr>
 <th></th>
@@ -61,6 +60,18 @@ a count.</span>
 {% if form.eventDate.errors %}
 <img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
 {% for e in form.eventDate.errors %}
+<span class="error">{{ e }}</span>
+{% endfor %}
+{% endif %}
+</td>
+</tr>
+<tr>
+<th>Enrollment</th>
+<td>
+{{ form.enrollment }}
+{% if form.enrollment.errors %}
+<img src="{% static "wrpt/icon_error.gif" %}" alt="error"/>
+{% for e in form.enrollment.errors %}
 <span class="error">{{ e }}</span>
 {% endfor %}
 {% endif %}
