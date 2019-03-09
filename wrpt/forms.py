@@ -29,6 +29,7 @@ class CountForm (forms.Form):
     self.classroom = kwargs.pop("classroom")
     canSubmit = kwargs.pop("canSubmit")
     super().__init__(*args, **kwargs)
+    if self.is_bound: return
     self.fields["eventDate"].queryset = EventDate.objects.filter(
       schedule=self.classroom.program.schedule).order_by("date")
     # The initial enrollment value is either the value supplied by the
