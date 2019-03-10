@@ -214,5 +214,15 @@ class Count (models.Model):
   def __str__ (self):
     return "(%s, %s, %s)" % (self.program, self.eventDate,
       self.classroom)
+  def logFormat (self):
+    def f (v):
+      return str(v) if v != None else ""
+    return ("Count(id=%s,program=%s,eventDate=%s,classroom=%s," +\
+      "enrollment=%s,value=%s,activeValue=%s,inactiveValue=%s," +\
+      "absentees=%s,comments=%s)") %\
+      (f(self.id), f(self.program_id), f(self.eventDate_id),
+      f(self.classroom_id), f(self.enrollment), f(self.value),
+      f(self.activeValue), f(self.inactiveValue), f(self.absentees),
+      repr(self.comments))
   class Meta:
     unique_together = ("program", "eventDate", "classroom")

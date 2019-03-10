@@ -16,6 +16,7 @@ from collections import namedtuple
 import csv
 import datetime
 import io
+import logging
 
 from wrpt.models import Classroom, Count, EventDate, Program
 from wrpt.forms import CountForm
@@ -33,6 +34,13 @@ def percentage (m, n, a):
 def formCanBeSubmitted (user, classroom):
   return user.is_authenticated and\
     (user.is_staff or user.school == classroom.program.school)
+
+def log (request, operation, count1, count2=None):
+  logging.getLogger("wrpt").info(
+    "[WRPT] %s %s %s %s%s%s" % (request.META.get("REMOTE_ADDR", "unknown"),
+    request.user.username, operation,
+    "FROM=" if operation == "update" else "", count1,
+    " TO="+count2 if operation == "update" else ""))
 
 def home (request):
   current = []
@@ -97,6 +105,7 @@ def classroom (request, id):
         c = Count.objects.get(program=classroom.program,
           eventDate=form.cleaned_data["eventDate"], classroom=classroom)
         if form.cleaned_data["value"] != None:
+          before = c.logFormat()
           c.enrollment = form.cleaned_data["enrollment"]
           c.value = form.cleaned_data["value"]
           c.activeValue = form.cleaned_data["activeValue"]
@@ -104,9 +113,11 @@ def classroom (request, id):
           c.absentees = form.cleaned_data["absentees"]
           c.comments = form.cleaned_data["comments"]
           c.save()
+          log(request, "update", before, c.logFormat())
           messages.success(request, "Count updated.")
         else:
           c.delete()
+          log(request, "delete", c.logFormat())
           messages.success(request, "Count deleted.")
       except Count.DoesNotExist:
         if form.cleaned_data["value"] != None:
@@ -119,6 +130,7 @@ def classroom (request, id):
             absentees=form.cleaned_data["absentees"],
             comments=form.cleaned_data["comments"])
           c.save()
+          log(request, "create", c.logFormat())
           messages.success(request, "Count saved.")
         else:
           messages.success(request, "Did you mean to supply a count?")
