@@ -9,20 +9,25 @@ from django.core.validators import ValidationError
 
 from wrpt.models import Count, EventDate
 
+maxValue = 1000
+
 class CountForm (forms.Form):
   eventDate = forms.ModelChoiceField(queryset=EventDate.objects.all())
   # Without 'localize=True' below, Django uses a bizarro widget that
   # doesn't check for valid integers?!
   # Enrollment is required, but will receive an initial value below.
-  enrollment = forms.IntegerField(min_value=1, required=True, localize=True)
+  enrollment = forms.IntegerField(min_value=1, max_value=maxValue,
+    required=True, localize=True)
   # Note that the value fields are allowed to be blank: blank values
   # are treated as a command to delete an existing count.
-  value = forms.IntegerField(min_value=0, required=False, localize=True)
-  activeValue = forms.IntegerField(min_value=0, required=False, localize=True)
-  inactiveValue =\
-    forms.IntegerField(min_value=0, required=False, localize=True)
-  absentees = forms.IntegerField(min_value=0, required=True, localize=True,
-    initial=0)
+  value = forms.IntegerField(min_value=0, max_value=maxValue,
+    required=False, localize=True)
+  activeValue = forms.IntegerField(min_value=0, max_value=maxValue,
+    required=False, localize=True)
+  inactiveValue = forms.IntegerField(min_value=0, max_value=maxValue,
+    required=False, localize=True)
+  absentees = forms.IntegerField(min_value=0, max_value=maxValue,
+    required=True, localize=True, initial=0)
   comments = forms.CharField(max_length=1000, required=False,
     widget=forms.TextInput(attrs={ "size": "100" }))
   def __init__ (self, *args, **kwargs):
