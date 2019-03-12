@@ -34,6 +34,7 @@ that classroom.</p>
 {% endif %}
 </td>
 </tr>
+{% if not hasData %}
 <tr>
 <th style="vertical-align: baseline">Classrooms</th>
 <td>
@@ -42,6 +43,7 @@ that classroom.</p>
 {% endfor %}
 </td>
 </tr>
+{% endif %}
 </table>
 
 {% endblock %}
@@ -81,7 +83,8 @@ to work.
 </tr>
 {% for r in classroomData %}
 <tr>
-<th class="left-header">{{ r.classroom }}</th>
+<th class="left-header"><a
+href="{% url "classroom" r.classroom.pk %}">{{ r.classroom }}</a></th>
 <th class="left-header">%</th>
 {% for c in r.data|slice:slice %}
 <td>{% if c.percentage != None %}{{ c.percentage }}{% endif %}</td>
