@@ -1,0 +1,110 @@
+#! /usr/bin/env python
+
+# =============================================================================
+# Walk&Roll Performance Tracking
+# Copyright (c) 2014, Greg Janee <gregjanee@gmail.com>
+# License: http://www.gnu.org/licenses/gpl-2.0.html
+# -----------------------------------------------------------------------------
+
+# Usage: rank-classrooms dumpfile program {active|inactive|combined}
+#
+# Ranks classrooms by cumulative participation percentage in a
+# selected category.  The input is a WRPT dumpfile, i.e., a CSV file
+# with columns:
+#
+#    program,eventDate,classroom,enrollment,value,activeValue,\
+#    inactiveValue,absentees,comments
+#
+# Example record:
+#
+#    2013-2014 Washington,2014-05-21,Summerset,23,15,,,0,"Rained today!"
+#
+# The output, written to standard output, is a CSV file with columns:
+#
+#    classroom,date1,date2,...
+#
+# For example:
+#
+#    classroom,2014-03-12,2014-03-19,2014-04-02,2014-04-09,2014-04-16,...
+#    Summerset,21.7,47.8,49.3,46.7,52.2,...
+#
+# The date columns correspond to program event dates and are listed in
+# date order; the values in the date columns are cumulative
+# participation percentages for the selected program category.  The
+# rows, i.e., the classrooms, are ordered in descending order of the
+# final date column.
+
+from collections import namedtuple, defaultdict
+import csv
+import sys
+
+Count = namedtuple("Count", ["enrollment", "activeValue", "inactiveValue",
+  "absentees"])
+CumulativeStats = namedtuple("CumulativeStats", ["activeSum",
+  "inactiveSum", "presentSum", "activePct", "inactivePct", "combinedPct"])
+
+if len(sys.argv) != 4 or sys.argv[3] not in ["active", "inactive", "combined"]:
+  sys.stderr.write("Usage: rank-classrooms dumpfile program " +\
+    "{active|inactive|combined}\n")
+  sys.exit(1)
+DUMPFILE, PROGRAM, CATEGORY = sys.argv[1:]
+
+dates = set()
+counts = defaultdict(lambda: {}) # { classroom: { date: Count } }
+
+for r in csv.reader(open(DUMPFILE)):
+  program, eventDate, classroom, enrollment, value, activeValue,\
+    inactiveValue, absentees, _ = r
+  if program != PROGRAM: continue
+  enrollment = int(enrollment)
+  value = int(value)
+  if activeValue == "" and inactiveValue == "":
+    # For programs that don't split counts, equate the combined count
+    # with the active count.
+    activeValue = value
+    inactiveValue = 0
+  else:
+    activeValue = int(activeValue)
+    inactiveValue = int(inactiveValue)
+  absentees = int(absentees)
+  assert enrollment >= 1 and value >= 0 and activeValue >= 0 and\
+    inactiveValue >= 0 and absentees >= 0 and\
+    value == activeValue+inactiveValue and value+absentees <= enrollment
+  dates.add(eventDate)
+  counts[classroom][eventDate] = Count(enrollment, activeValue,
+    inactiveValue, absentees)
+
+dates = sorted(dates)
+stats = {} # { classroom: [CumulativeStats, ...] }
+
+for cr, data in counts.items():
+  stats[cr] = [CumulativeStats(0, 0, 0, 0.0, 0.0, 0.0)]
+  # Use the earliest recorded enrollment as the starting enrollment.
+  lastEnrollment = data[sorted(data)[0]].enrollment
+  for d in dates:
+    # If a classroom has no count recorded for an event date, it is
+    # penalized by being given zero participation relative to its most
+    # recently observed enrollment.
+    if d in data:
+      c = data[d]
+      lastEnrollment = c.enrollment
+    else:
+      c = Count(lastEnrollment, 0, 0, 0)
+    prev = stats[cr][-1]
+    activeSum = prev.activeSum + c.activeValue
+    inactiveSum = prev.inactiveSum + c.inactiveValue
+    presentSum = prev.presentSum + (c.enrollment-c.absentees)
+    stats[cr].append(CumulativeStats(activeSum, inactiveSum, presentSum,
+      activeSum/max(presentSum, 1),
+      inactiveSum/max(presentSum, 1),
+      (activeSum+inactiveSum)/max(presentSum, 1)))
+
+classrooms = sorted(stats,
+  key=lambda cr: getattr(stats[cr][-1], CATEGORY+"Pct"),
+  reverse=True)
+
+w = csv.writer(sys.stdout)
+w.writerow(["classroom"] + dates)
+for cr in classrooms:
+  w.writerow([cr] + ["%.1f" % (getattr(cs, CATEGORY+"Pct")*100)\
+    for cs in stats[cr][1:]])
