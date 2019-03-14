@@ -89,12 +89,23 @@ def schoolYearValidator (value):
   if not m or int(m.group(2)) != int(m.group(1))+1:
     raise ValidationError("Invalid school year.")
 
+def defaultSchoolYear ():
+  t = datetime.date.today()
+  # After March, we assume a program is being created for the next
+  # school year.
+  if t.month <= 3:
+    y = t.year-1
+  else:
+    y = t.year
+  return "%d-%d" % (y, y+1)
+
 class Program (models.Model):
   # A Walk&Roll program for a school in a given school year.
   # Classrooms and counts belong to programs.
   school = models.ForeignKey(School, on_delete=models.CASCADE)
   schoolYear = models.CharField(max_length=9, validators=[schoolYearValidator],
-    verbose_name="School year", help_text="Ex: 2013-2014")
+    verbose_name="School year", help_text="Ex: 2013-2014",
+    default=defaultSchoolYear)
   schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE)
   splitCounts = models.BooleanField(verbose_name="Split counts",
     help_text="Check to split participation counts into two parts, " +\
