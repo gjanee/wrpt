@@ -7,6 +7,8 @@
 from django import forms
 from django.core.validators import ValidationError
 
+import datetime
+
 from wrpt.models import Count, EventDate
 
 maxValue = 1000
@@ -35,8 +37,13 @@ class CountForm (forms.Form):
     canSubmit = kwargs.pop("canSubmit")
     super().__init__(*args, **kwargs)
     if self.is_bound: return
-    self.fields["eventDate"].queryset = EventDate.objects.filter(
-      schedule=self.classroom.program.schedule).order_by("date")
+    dates = EventDate.objects.filter(schedule=self.classroom.program.schedule)\
+      .order_by("date")
+    self.fields["eventDate"].queryset = dates
+    # Set the initial date to the most recent date not in the future.
+    t = datetime.date.today()
+    l = [d for d in dates if d.date <= t]
+    if len(l) > 0: self.fields["eventDate"].initial = l[-1]
     # The initial enrollment value is either the value supplied by the
     # most recent count for this classroom, or the classroom's nominal
     # value.
@@ -67,6 +74,8 @@ class CountForm (forms.Form):
     if not self.classroom.program.isCurrent():
       raise ValidationError("The program has concluded.")
     d = cleaned_data
+    if d["eventDate"].date > datetime.date.today():
+      raise ValidationError({ "eventDate": "Date is in the future." })
     if self.classroom.program.splitCounts:
       countSubmitted = (d["activeValue"] != None or d["inactiveValue"] != None)
       if countSubmitted:
