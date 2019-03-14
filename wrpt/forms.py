@@ -36,7 +36,6 @@ class CountForm (forms.Form):
     self.classroom = kwargs.pop("classroom")
     canSubmit = kwargs.pop("canSubmit")
     super().__init__(*args, **kwargs)
-    if self.is_bound: return
     dates = EventDate.objects.filter(schedule=self.classroom.program.schedule)\
       .order_by("date")
     self.fields["eventDate"].queryset = dates
