@@ -192,9 +192,9 @@ re-enter the correct value, then re-submit.</p>
 
 {% if hasData %}
 
-<p>The table below displays percentages for individual event days.
-Hover over a cell to reveal recorded counts.  The graph displays
-cumulative percentages over time.</p>
+<p>The table below displays participation percentages for individual
+event days.  Hover over a cell to reveal recorded counts.  The graph
+displays cumulative percentages over time.</p>
 
 {% for slice in tableSlices %}
 <table class="table-header-rotated">
@@ -215,7 +215,24 @@ to work.
 <tr>
 <th class="left-header">Walk/bike %</th>
 {% for d in data|slice:slice %}
-<td>{% if d.activePct != None %}{{ d.activePct }}{% endif %}</td>
+<td>
+{% if d.activePct != None %}
+<div class="tooltip">
+{{ d.activePct }}
+<span class="tooltiptext">
+<span style="text-decoration: underline">{{ d.date }}</span><br/>
+Enrollment: {{ d.count.enrollment }}<br/>
+{% if program.splitCounts %}
+Walk/bike: {{ d.count.activeValue }}<br/>
+Carpool/bus: {{ d.count.inactiveValue }}<br/>
+{% else %}
+Participants: {{ d.count.value }}<br/>
+{% endif %}
+Absentees: {{ d.count.absentees }}
+</span>
+</div>
+{% endif %}
+</td>
 {% endfor %}
 {% if forloop.last %}
 <td class="overall-row">{{ lastStats.activeCumPct }}</td>
@@ -224,7 +241,24 @@ to work.
 <tr>
 <th class="left-header">Carpool/bus %</th>
 {% for d in data|slice:slice %}
-<td>{% if d.inactivePct != None %}{{ d.inactivePct }}{% endif %}</td>
+<td>
+{% if d.inactivePct != None %}
+<div class="tooltip">
+{{ d.inactivePct }}
+<span class="tooltiptext">
+<span style="text-decoration: underline">{{ d.date }}</span><br/>
+Enrollment: {{ d.count.enrollment }}<br/>
+{% if program.splitCounts %}
+Walk/bike: {{ d.count.activeValue }}<br/>
+Carpool/bus: {{ d.count.inactiveValue }}<br/>
+{% else %}
+Participants: {{ d.count.value }}<br/>
+{% endif %}
+Absentees: {{ d.count.absentees }}
+</span>
+</div>
+{% endif %}
+</td>
 {% endfor %}
 {% if forloop.last %}
 <td class="overall-row">{{ lastStats.inactiveCumPct }}</td>
@@ -236,7 +270,24 @@ to work.
 {% if program.splitCounts %}Overall{% else %}Participant{% endif %} %
 </th>
 {% for d in data|slice:slice %}
-<td>{% if d.combinedPct != None %}{{ d.combinedPct }}{% endif %}</td>
+<td>
+{% if d.combinedPct != None %}
+<div class="tooltip">
+{{ d.combinedPct }}
+<span class="tooltiptext">
+<span style="text-decoration: underline">{{ d.date }}</span><br/>
+Enrollment: {{ d.count.enrollment }}<br/>
+{% if program.splitCounts %}
+Walk/bike: {{ d.count.activeValue }}<br/>
+Carpool/bus: {{ d.count.inactiveValue }}<br/>
+{% else %}
+Participants: {{ d.count.value }}<br/>
+{% endif %}
+Absentees: {{ d.count.absentees }}
+</span>
+</div>
+{% endif %}
+</td>
 {% endfor %}
 {% if forloop.last %}
 <td class="overall-row">{{ lastStats.combinedCumPct }}</td>
