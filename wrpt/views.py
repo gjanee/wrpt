@@ -23,13 +23,46 @@ from wrpt.forms import CountForm
 
 maximumTableWidth = 20 # columns
 
-def percentage (m, n, a):
-  # Returns m/(n-a) as an integer percentage, safely.
-  d = n-a
+def percentage (n, d):
+  # Returns n/d as an integer percentage, safely.
   if d > 0:
-    return min(round((m/d)*100), 100)
+    return round((n/d)*100)
   else:
     return 0
+
+class ClassroomStats (object):
+  # This class is more complex than would seem to be necessary because
+  # of the need to accommodate three cases: a date for which there is
+  # a count; a date for which no count was recorded (in which case
+  # percentages are not displayed in the table, but cumulative counts
+  # and percentages are still computed and displayed in the graph);
+  # and a date in the future (which holds no data and serves only as a
+  # placeholder).  Note that the supplied count is stored and may be
+  # modified.
+  def __init__ (self, date, count=None, prev=None,
+    computeEventDatePercentages=True):
+    self.date = date
+    if count == None: return
+    self.count = count
+    if count.activeValue == None:
+      count.activeValue = count.value
+      count.inactiveValue = 0
+    present = count.enrollment - count.absentees
+    self.presentSum = present
+    self.activeSum = count.activeValue
+    self.inactiveSum = count.inactiveValue
+    if prev != None:
+      self.presentSum += prev.presentSum
+      self.activeSum += prev.activeSum
+      self.inactiveSum += prev.inactiveSum
+    self.combinedCumPct = percentage(self.activeSum+self.inactiveSum,
+      self.presentSum)
+    self.activeCumPct = percentage(self.activeSum, self.presentSum)
+    self.inactiveCumPct = percentage(self.inactiveSum, self.presentSum)
+    if computeEventDatePercentages:
+      self.combinedPct = percentage(count.value, present)
+      self.activePct = percentage(count.activeValue, present)
+      self.inactivePct = percentage(count.inactiveValue, present)
 
 def formCanBeSubmitted (user, classroom):
   return user.is_authenticated and\
@@ -55,32 +88,41 @@ def home (request):
   return render(request, "wrpt/home.html", { "currentPrograms": current,
     "pastPrograms": past })
 
-def addClassroomData (context, classroom, dataKey):
-  Datum = namedtuple("Datum", ["enrollment", "value", "absentees"])
+def computeClassroomData (dates, map, classroom):
+  today = datetime.date.today()
+  stats = []
+  lastEnrollment = classroom.enrollment
+  i = -1
+  for d in dates:
+    if d.date <= today:
+      i += 1
+      # If the classroom has no count recorded for the event date, it
+      # is penalized by being given zero participation relative to its
+      # most recently observed enrollment.
+      if (classroom.pk, d.pk) in map:
+        c = map[(classroom.pk, d.pk)]
+        lastEnrollment = c.enrollment
+        countFound = True
+      else:
+        c = Count(enrollment=lastEnrollment, value=0)
+        countFound = False
+      s = ClassroomStats(d, c, stats[-1] if len(stats) > 0 else None,
+        computeEventDatePercentages=countFound)
+    else:
+      s = ClassroomStats(d)
+    stats.append(s)
+  return stats, stats[i] if i >= 0 else None
+
+def addClassroomData (context, classroom):
   dates = EventDate.objects.filter(
     schedule=classroom.program.schedule).order_by("date")
-  map = dict((c.eventDate.pk, Datum(c.enrollment, c.value, c.absentees))\
+  map = dict(((classroom.pk, c.eventDate.pk), c)\
     for c in Count.objects.filter(classroom=classroom)\
     .select_related("eventDate"))
   context["hasData"] = (len(map) > 0)
   if context["hasData"]:
-    data = []
-    overall = [0, 0] # numerator, denominator
-    for date in dates:
-      if date.pk in map:
-        d = map[date.pk]
-        data.append({ "date": date, "count": d.value, "absentees": d.absentees,
-          "percentage": percentage(d.value, d.enrollment, d.absentees) })
-        if date.date <= datetime.date.today():
-          overall[0] += d.value
-          overall[1] += d.enrollment - d.absentees
-      else:
-        data.append({ "date": date, "count": None, "absentees": None,
-          "percentage": None })
-        if date.date <= datetime.date.today():
-          overall[1] += classroom.enrollment
-    context[dataKey] = data
-    context["overall"] = percentage(overall[0], overall[1], 0)
+    context["data"], context["lastStats"] =\
+      computeClassroomData(dates, map, classroom)
     # It's a pain to do slicing inside templates, so compute the table
     # slices here.
     slices = []
@@ -142,10 +184,10 @@ def classroom (request, id):
   # This view is also used to view one-classroom programs.
   if classroom.name == "entire school" and\
     classroom.program.classroom_set.count() == 1:
-    context["label"] = "School"
+    context["label"] = "school"
   else:
-    context["label"] = "Classroom"
-  addClassroomData(context, classroom, "data")
+    context["label"] = "classroom"
+  addClassroomData(context, classroom)
   return render(request, "wrpt/classroom.html", context)
 
 def addProgramData (context, program, classrooms):
@@ -169,7 +211,7 @@ def addProgramData (context, program, classrooms):
         if (c.pk, date.pk) in map:
           d = map[(c.pk, date.pk)]
           data.append({ "date": date,
-            "percentage": percentage(d.value, d.enrollment, d.absentees) })
+            "percentage": percentage(d.value, d.enrollment-d.absentees) })
           if date.date <= datetime.date.today():
             classroomOverall[0] += d.value
             classroomOverall[1] += d.enrollment - d.absentees
@@ -182,14 +224,14 @@ def addProgramData (context, program, classrooms):
             overall[date.pk] = Datum(overall[date.pk][0]+c.enrollment,
               overall[date.pk][1], overall[date.pk][2])
       classroomData.append({ "classroom": c, "data": data,
-        "overall": percentage(classroomOverall[0], classroomOverall[1], 0) })
+        "overall": percentage(classroomOverall[0], classroomOverall[1]) })
     context["classroomData"] = classroomData
     data = []
     for d in dates:
       if d.date <= datetime.date.today():
         data.append({ "date": d,
           "percentage": percentage(overall[d.pk].value,
-          overall[d.pk].enrollment, overall[d.pk].absentees) })
+          overall[d.pk].enrollment-overall[d.pk].absentees) })
       else:
         data.append({ "date": d, "percentage": None })
     context["schoolData"] = data

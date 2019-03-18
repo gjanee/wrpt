@@ -6,12 +6,11 @@ Variables:
   classroom = Classroom
   form = CountForm
   canSubmit = bool
-  label = "Classroom" or "School"
+  label = "classroom" or "school"
   hasData = bool
   if hasData:
-    data = [{ date: EventDate, count: int|none, absentees: int|none,
-      percentage: int|none }, ...]
-    overall = int
+    data = [ClassroomStats, ...]
+    lastStats = ClassroomStats # last entry in above not in future
     tableSlices = [str, ...]
 {% endcomment %}
 
@@ -29,8 +28,8 @@ Variables:
 
 {% block body %}
 
-<p>Use this form to enter your {{ label|lower }}&rsquo;s Walk &amp;
-Roll participation total for a given event date.  You can also enter
+<p>Use this form to enter your {{ label }}&rsquo;s Walk &amp; Roll
+participation total for a given event date.  You can also enter
 comments (trend observations, questions, suggestions) if desired.</p>
 
 <form action="{% url "classroom" classroom.pk %}" method="post">
@@ -193,6 +192,10 @@ re-enter the correct value, then re-submit.</p>
 
 {% if hasData %}
 
+<p>The table below displays percentages for individual event days.
+Hover over a cell to reveal recorded counts.  The graph displays
+cumulative percentages over time.</p>
+
 {% for slice in tableSlices %}
 <table class="table-header-rotated">
 <tr>
@@ -204,29 +207,43 @@ to work.
 {% endcomment %}
 <th class="rotate-45"><div><span>{{ d.date }}</span></div></th>
 {% endfor %}
+{% if forloop.last %}
+<th class="rotate-45"><div><span>Total to date</span></div></th>
+{% endif %}
+</tr>
+{% if program.splitCounts %}
+<tr>
+<th class="left-header">Walk/bike %</th>
+{% for d in data|slice:slice %}
+<td>{% if d.activePct != None %}{{ d.activePct }}{% endif %}</td>
+{% endfor %}
+{% if forloop.last %}
+<td class="overall-row">{{ lastStats.activeCumPct }}</td>
+{% endif %}
 </tr>
 <tr>
-<th class="left-header">Participants</th>
+<th class="left-header">Carpool/bus %</th>
 {% for d in data|slice:slice %}
-<td>{% if d.count != None %}{{ d.count }}{% endif %}</td>
+<td>{% if d.inactivePct != None %}{{ d.inactivePct }}{% endif %}</td>
 {% endfor %}
+{% if forloop.last %}
+<td class="overall-row">{{ lastStats.inactiveCumPct }}</td>
+{% endif %}
 </tr>
+{% endif %}
 <tr>
-<th class="left-header">Absentees</th>
+<th class="left-header">
+{% if program.splitCounts %}Overall{% else %}Participant{% endif %} %
+</th>
 {% for d in data|slice:slice %}
-<td>{% if d.absentees != None %}{{ d.absentees }}{% endif %}</td>
+<td>{% if d.combinedPct != None %}{{ d.combinedPct }}{% endif %}</td>
 {% endfor %}
-</tr>
-<tr>
-<th class="left-header">%</th>
-{% for d in data|slice:slice %}
-<td>{% if d.percentage != None %}{{ d.percentage }}{% endif %}</td>
-{% endfor %}
+{% if forloop.last %}
+<td class="overall-row">{{ lastStats.combinedCumPct }}</td>
+{% endif %}
 </tr>
 </table>
 {% endfor %}
-
-<p>Total participation to date: {{ overall }}%</p>
 
 <div id="chart"></div>
 
