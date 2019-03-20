@@ -1,6 +1,6 @@
 {% comment %}
 Variables:
-  verticalAxis = str (optional)
+  label = str
   data = [ClassroomStats, ...]
   graphSeries = [(label, ClassroomStats attribute), ...]
   program.participationGoal = int|none
@@ -31,9 +31,10 @@ function drawChart () {
 {% endwith %}
 
   var options = {
+    title: "Cumulative performance",
     backgroundColor: { fill: "#F7FAFD", strokeWidth: 2 },
     hAxis: { title: "Event date" },
-    vAxis: { title: "{{ verticalAxis|default:"Cumulative percentage" }}",
+    vAxis: { title: "{{ label|capfirst }} percentage",
       minValue: 0, maxValue: 100 }
   };
 
