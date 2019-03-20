@@ -188,6 +188,25 @@ def classroom (request, id):
   else:
     context["label"] = "classroom"
   addClassroomData(context, classroom)
+  if context["hasData"]:
+    # Because we don't allow users to enter counts for dates that are
+    # in the future, if hasData is true then there must be a
+    # lastStats, but out of an abundance of caution...
+    if context["lastStats"] != None:
+      ls = context["lastStats"]
+      if classroom.program.splitCounts:
+        context["graphSeries"] = [
+          ("Overall", "combinedCumPct", ls.combinedCumPct),
+          ("Walk/bike", "activeCumPct", ls.activeCumPct),
+          ("Carpool/bus", "inactiveCumPct", ls.inactiveCumPct)]
+      else:
+        context["graphSeries"] = [
+          ("Participation", "combinedCumPct", ls.combinedCumPct)]
+      # Sort the series in decreasing order of total to date
+      # percentage.
+      context["graphSeries"].sort(key=lambda t: -t[2])
+    else:
+      context["graphSeries"] = []
   return render(request, "wrpt/classroom.html", context)
 
 def addProgramData (context, program, classrooms):

@@ -12,15 +12,22 @@ Variables:
     data = [ClassroomStats, ...]
     lastStats = ClassroomStats # last entry in above not in future
     tableSlices = [str, ...]
+    graphSeries = [(label, ClassroomStats attribute), ...]
 {% endcomment %}
 
 {% load static %}
 
-{% if hasData %}
 {% block javascript %}
-{% include "wrpt/chart.html" %}
-{% endblock %}
+{% if hasData and graphSeries %}
+{% comment %}
+Bizarrely, to get the include below to obey the outer conditional, it
+is necessary to reference the path indirectly.
+{% endcomment %}
+{% with "wrpt/chart.html" as path %}
+{% include path %}
+{% endwith %}
 {% endif %}
+{% endblock %}
 
 {% block breadcrumbs %} &raquo;
 <a href="{% url "program" program.pk %}">{{ program }}</a> &raquo;

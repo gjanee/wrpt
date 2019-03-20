@@ -1,9 +1,12 @@
 {% comment %}
 Variables:
-  label = str
-  data = [{ date: EventDate, percentage: int|none }, ...]
+  verticalAxis = str (optional)
+  data = [ClassroomStats, ...]
+  graphSeries = [(label, ClassroomStats attribute), ...]
   program.participationGoal = int|none
 {% endcomment %}
+
+{% load wrpt %}
 
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript">//<![CDATA[
@@ -13,31 +16,25 @@ google.setOnLoadCallback(drawChart);
 
 function drawChart () {
 
+{% with program.participationGoal as goal %}
   var data = google.visualization.arrayToDataTable([
-    ["Event date",
-     {% if program.participationGoal != None %}"Goal",{% endif %}
-     "{{ label }} percentage"],
-{% for d in data %}
-["{{ d.date|escapejs }}",
-{% if program.participationGoal != None %}
-{{ program.participationGoal }},
-{% endif %}
-{% if d.percentage != None %}
-{{ d.percentage }}
-{% else %}
-null
-{% endif %}]{% if not forloop.last %},{% endif %}
-{% endfor %}
+    ["Event date"
+    {% for s in graphSeries %}, "{{ s.0 }}"{% endfor %}
+    {% if goal != None %}, "Goal"{% endif %}],
+    {% for d in data %}
+      ["{{ d.date|escapejs }}"
+      {% for s in graphSeries %}, {{ d|getattr_or_null:s.1 }}{% endfor %}
+      {% if goal != None %}, {{ goal }}{% endif %}]
+      {% if not forloop.last %},{% endif %}
+    {% endfor %}
   ]);
+{% endwith %}
 
   var options = {
-    backgroundColor: { fill: "#F2F5F8", strokeWidth: 2 },
+    backgroundColor: { fill: "#F7FAFD", strokeWidth: 2 },
     hAxis: { title: "Event date" },
-    vAxis: { title: "{{ label }} percentage", minValue: 0, maxValue: 100 },
-    series: [
-      {% if program.participationGoal != None %}{ color: "green" },{% endif %}
-      { color: "red", visibleInLegend: false }
-    ]
+    vAxis: { title: "{{ verticalAxis|default:"Cumulative percentage" }}",
+      minValue: 0, maxValue: 100 }
   };
 
   var chart = new google.visualization.LineChart(
