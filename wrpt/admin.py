@@ -26,7 +26,8 @@ class WrptUserAdmin (UserAdmin):
   fieldsets = (
     (None, { "fields": ("username", "password") }),
     ("Personal info", { "fields": ("first_name", "last_name", "email") }),
-    ("Permissions", { "fields": ("is_active", "is_staff", "school") })
+    ("Permissions", { "fields": ("is_active", "is_staff", "school",
+      "hideChangePasswordLink") })
   )
   # The UserAdmin change user template includes a "View on site" link
   # that we don't support but is just impossible to get rid of, so we

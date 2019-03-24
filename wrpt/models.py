@@ -60,7 +60,7 @@ class School (models.Model):
     verbose_name_plural = "   Schools"
 
 class WrptUser (User):
-  # A user login.  We extend the Django auth User class only to
+  # A user login.  We extend the Django auth User class primarily to
   # associate a user with a school.  Since we otherwise use the Django
   # auth app, the implication is that wherever Users are created
   # (namely, when authenticating and when creating the initial
@@ -69,10 +69,17 @@ class WrptUser (User):
     blank=True, null=True,
     help_text="The school that this user can update.  " +\
     "Set for non-staff users only.")
+  hideChangePasswordLink = models.BooleanField("Hide change password link",
+    default=False,
+    help_text="If checked, hides the 'Change password' link from the user " +\
+      "(password can still be changed by staff).")
   def clean (self):
     if self.is_staff and self.school != None:
       raise ValidationError("Check the 'Staff status' box or " +\
         "select a school, not both.")
+    if self.hideChangePasswordLink and self.is_staff:
+      raise ValidationError({ "hideChangePasswordLink":
+        "This box can be checked for non-staff users only." })
   def save (self, *args, **kwargs):
     # We don't distinguish between being staff and being a superuser.
     self.is_superuser = self.is_staff

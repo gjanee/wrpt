@@ -26,7 +26,9 @@ Logged in as {{ user.username }}<br/>
 <a href="{% url "admin:index" %}">Admin site</a> &bull;
 <a href="{% url "dump_counts" %}">Dump counts</a> &bull;
 {% endif %}
+{% if not user.hideChangePasswordLink %}
 <a href="{% url "change_password" %}">Change password</a> &bull;
+{% endif %}
 <a href="{% url "logout" %}?next={{ request.path }}">Logout</a>
 {% else %}
 <a href="{% url "login" %}?next={{ request.path }}">Login</a>
