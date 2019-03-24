@@ -8,18 +8,22 @@ Variables:
   classrooms = [Classroom, ...]
   hasData = bool
   if hasData:
-    dates = [EventDate, ...]
-    schoolData = [{ date: EventDate, percentage: int|none }, ...]
-    classroomData = [{ classroom: Classroom,
-      data: [{ date: EventDate, percentage: int|none }, ...],
-      overall: int }, ...]
+    data = [ProgramStats, ...]
+    lastStats = ProgramStats # last entry in above not in future or None
+    classroomData = [(classroom, lastStats, [ClassroomStats, ...]), ...]
     tableSlices = [str, ...]
+    graphSeries = [(label, ProgramStats attribute), ...]
 {% endcomment %}
 
 {% block subbody %}
 
 <p>Select a classroom below to view or update the participation by
-that classroom.</p>
+that classroom.
+{% if hasData %}
+The table displays participation percentages for individual event
+days. The graph displays cumulative percentages over time.
+{% endif %}
+</p>
 
 <table class="form">
 <tr><th>Program</th><td>{{ program }}</td></tr>
@@ -50,47 +54,44 @@ that classroom.</p>
 
 {% block table %}
 
-<p>All numbers below are <strong>percentages</strong> of the school or
-classroom enrollment as appropriate.</p>
-
 {% for slice in tableSlices %}
 <table class="table-header-rotated">
 <tr>
 <th></th>
 <th></th>
-{% for d in dates|slice:slice %}
+{% for d in data|slice:slice %}
 {% comment %}
 The <div><span>...</span></div> goofiness is necessary for the styling
 to work.
 {% endcomment %}
-<th class="rotate-45"><div><span>{{ d }}</span></div></th>
+<th class="rotate-45"><div><span>{{ d.date }}</span></div></th>
 {% endfor %}
 {% if forloop.last %}
 <th class="rotate-45"><div><span>Total to date</span></div></th>
 {% endif %}
 </tr>
 <tr>
-<th class="left-header overall-row">Overall</th>
+<th class="left-header overall-row">Program</th>
 <th class="left-header overall-row">%</th>
-{% for d in schoolData|slice:slice %}
+{% for d in data|slice:slice %}
 <td class="overall-row">
-{% if d.percentage != None %}{{ d.percentage }}{% endif %}
+{% if d.combinedPct != None %}{{ d.combinedPct }}{% endif %}
 </td>
 {% endfor %}
 {% if forloop.last %}
-<td class="overall-row"></td>
+<td class="overall-row">{{ lastStats.combinedCumPct }}</td>
 {% endif %}
 </tr>
 {% for r in classroomData %}
 <tr>
 <th class="left-header"><a
-href="{% url "classroom" r.classroom.pk %}">{{ r.classroom }}</a></th>
+href="{% url "classroom" r.0.pk %}">{{ r.0 }}</a></th>
 <th class="left-header">%</th>
-{% for c in r.data|slice:slice %}
-<td>{% if c.percentage != None %}{{ c.percentage }}{% endif %}</td>
+{% for d in r.2|slice:slice %}
+<td>{% if d.combinedPct != None %}{{ d.combinedPct }}{% endif %}</td>
 {% endfor %}
 {% if forloop.parentloop.last %}
-<td class="overall-row">{{ r.overall }}</td>
+<td class="overall-row">{{ r.1.combinedCumPct }}</td>
 {% endif %}
 </tr>
 {% endfor %}
