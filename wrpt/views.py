@@ -287,8 +287,7 @@ def program (request, id):
   elif len(classrooms) == 1 and classrooms[0].name == "entire school":
     return redirect("classroom", id=classrooms[0].pk)
   else:
-    totalEnrollment =\
-      classrooms.aggregate(Sum("enrollment"))["enrollment__sum"]
+    totalEnrollment = sum(c.enrollment for c in classrooms)
     context = { "program": program, "classrooms": classrooms,
       "totalEnrollment": totalEnrollment }
     addProgramData(context, program, classrooms)
