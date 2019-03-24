@@ -210,24 +210,13 @@ def classroom (request, id):
     context["label"] = "classroom"
   addClassroomData(context, classroom)
   if context["hasData"]:
-    # Because we don't allow users to enter counts for dates that are
-    # in the future, if hasData is true then there must be a
-    # last ClassroomStats, but out of an abundance of caution...
-    if context["lastStats"] != None:
-      ls = context["lastStats"]
-      if classroom.program.splitCounts:
-        context["graphSeries"] = [
-          ("Overall", "combinedCumPct", ls.combinedCumPct),
-          ("Walk/bike", "activeCumPct", ls.activeCumPct),
-          ("Carpool/bus", "inactiveCumPct", ls.inactiveCumPct)]
-      else:
-        context["graphSeries"] = [
-          ("Participation", "combinedCumPct", ls.combinedCumPct)]
-      # Sort the series in decreasing order of total to date
-      # percentage.
-      context["graphSeries"].sort(key=lambda t: -t[2])
+    if classroom.program.splitCounts:
+      context["graphSeries"] = [
+        ("Walk/bike", "activeCumPct"),
+        ("Carpool/bus", "inactiveCumPct"),
+        ("Overall", "combinedCumPct")]
     else:
-      context["graphSeries"] = []
+      context["graphSeries"] = [("Participation", "combinedCumPct")]
   return render(request, "wrpt/classroom.html", context)
 
 def addProgramData (context, program, classrooms):
@@ -292,13 +281,7 @@ def program (request, id):
       "totalEnrollment": totalEnrollment }
     addProgramData(context, program, classrooms)
     if context["hasData"]:
-      # Because we don't allow users to enter counts for dates that
-      # are in the future, if hasData is true then there must be a
-      # last ProgramStats, but out of an abundance of caution...
-      if context["lastStats"] != None:
-        context["graphSeries"] = [("Participation", "combinedCumPct")]
-      else:
-        context["graphSeries"] = []
+      context["graphSeries"] = [("Participation", "combinedCumPct")]
     return render(request, "wrpt/program-n.html", context)
 
 @staff_member_required
