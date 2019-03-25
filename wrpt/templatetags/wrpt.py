@@ -8,7 +8,6 @@ from django import template
 
 register = template.Library()
 
-def getattr_or_null (object, attr):
-  return getattr(object, attr, "null")
-
-register.filter("getattr_or_null", getattr_or_null)
+@register.simple_tag
+def getattr_or_null (objectList, index, attr):
+  return getattr(objectList[index], attr, "null")

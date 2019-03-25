@@ -9,16 +9,17 @@ Variables:
   label = "classroom" or "school"
   hasData = bool
   if hasData:
+    dates = [EventDate, ...]
     data = [ClassroomStats, ...]
     lastStats = ClassroomStats # last entry in above not in future or None
     tableSlices = [str, ...]
-    graphSeries = [(label, ClassroomStats attribute), ...]
+    graphs = [...] # see chart.html
 {% endcomment %}
 
 {% load static %}
 
 {% block javascript %}
-{% if hasData and graphSeries %}
+{% if hasData %}
 {% comment %}
 Bizarrely, to get the include below to obey the outer conditional, it
 is necessary to reference the path indirectly.

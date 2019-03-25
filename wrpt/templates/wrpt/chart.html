@@ -1,9 +1,16 @@
 {% comment %}
 Variables:
-  label = str
-  data = [ClassroomStats or ProgramStats, ...]
-  graphSeries = [(label, ClassroomStats or ProgramStats attribute), ...]
   program.participationGoal = int|none
+  dates = [EventDate, ...]
+  graphs = [{
+    name = str # div name
+    yAxisLabel = str
+    plotGoal = bool
+    series = [(label, data, attribute), ...]
+      label = str
+      data = [ClassroomStats|ProgramStats, ...]
+      attribute = str # ClassroomStats or ProgramStats attribute name
+  }, ...]
 {% endcomment %}
 
 {% load wrpt %}
@@ -12,19 +19,23 @@ Variables:
 <script type="text/javascript">//<![CDATA[
 
 google.load("visualization", "1.0", { packages: ["corechart"] });
-google.setOnLoadCallback(drawChart);
 
-function drawChart () {
+{% for g in graphs %}
+
+google.setOnLoadCallback(drawChart_{{ g.name }});
+function drawChart_{{ g.name }} () {
 
 {% with program.participationGoal as goal %}
   var data = google.visualization.arrayToDataTable([
     ["Event date"
-    {% for s in graphSeries %}, "{{ s.0 }}"{% endfor %}
-    {% if goal != None %}, "Goal"{% endif %}],
-    {% for d in data %}
-      ["{{ d.date|escapejs }}"
-      {% for s in graphSeries %}, {{ d|getattr_or_null:s.1 }}{% endfor %}
-      {% if goal != None %}, {{ goal }}{% endif %}]
+    {% for s in g.series %}, "{{ s.0|escapejs }}"{% endfor %}
+    {% if g.plotGoal and goal != None %}, "Goal"{% endif %}],
+    {% for d in dates %}
+      ["{{ d|escapejs }}"
+      {% for s in g.series %}
+      , {% getattr_or_null s.1 forloop.parentloop.counter0 s.2 %}
+      {% endfor %}
+      {% if g.plotGoal and goal != None %}, {{ goal }}{% endif %}]
       {% if not forloop.last %},{% endif %}
     {% endfor %}
   ]);
@@ -34,15 +45,17 @@ function drawChart () {
     title: "Cumulative performance",
     backgroundColor: { fill: "#F7FAFD", strokeWidth: 2 },
     hAxis: { title: "Event date" },
-    vAxis: { title: "{{ label|capfirst }} percentage",
+    vAxis: { title: "{{ g.yAxisLabel|capfirst }} percentage",
       minValue: 0, maxValue: 100 }
   };
 
   var chart = new google.visualization.LineChart(
-    document.getElementById("chart"));
+    document.getElementById("{{ g.name }}"));
 
   chart.draw(data, options);
 
 }
+
+{% endfor %}
 
 //]]></script>

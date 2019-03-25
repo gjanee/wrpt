@@ -8,11 +8,12 @@ Variables:
   classrooms = [Classroom, ...]
   hasData = bool
   if hasData:
+    dates = [EventDate, ...]
     data = [ProgramStats, ...]
     lastStats = ProgramStats # last entry in above not in future or None
     classroomData = [(classroom, lastStats, [ClassroomStats, ...]), ...]
     tableSlices = [str, ...]
-    graphSeries = [(label, ProgramStats attribute), ...]
+    graphs = [...] # see chart.html
 {% endcomment %}
 
 {% block subbody %}

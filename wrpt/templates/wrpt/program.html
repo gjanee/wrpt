@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block javascript %}
-{% if hasData and graphSeries %}
+{% if hasData %}
 {% comment %}
 Bizarrely, to get the include below to obey the outer conditional, it
 is necessary to reference the path indirectly.
 {% endcomment %}
 {% with "wrpt/chart.html" as path %}
-{% include path with label="program" %}
+{% include path %}
 {% endwith %}
 {% endif %}
 {% endblock %}

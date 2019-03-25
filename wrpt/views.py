@@ -141,6 +141,7 @@ def addClassroomData (context, classroom):
     .select_related("eventDate"))
   context["hasData"] = (len(map) > 0)
   if context["hasData"]:
+    context["dates"] = dates
     context["data"], i =\
       computeClassroomData(dates, map, classroom, datetime.date.today())
     context["lastStats"] = context["data"][i] if i >= 0 else None
@@ -210,13 +211,16 @@ def classroom (request, id):
     context["label"] = "classroom"
   addClassroomData(context, classroom)
   if context["hasData"]:
+    context["graphs"] = [{ "name": "chart", "yAxisLabel": context["label"],
+      "plotGoal": True }]
     if classroom.program.splitCounts:
-      context["graphSeries"] = [
-        ("Walk/bike", "activeCumPct"),
-        ("Carpool/bus", "inactiveCumPct"),
-        ("Overall", "combinedCumPct")]
+      context["graphs"][0]["series"] = [
+        ("Walk/bike", context["data"], "activeCumPct"),
+        ("Carpool/bus", context["data"], "inactiveCumPct"),
+        ("Overall", context["data"], "combinedCumPct")]
     else:
-      context["graphSeries"] = [("Participation", "combinedCumPct")]
+      context["graphs"][0]["series"] =\
+        [("Participation", context["data"], "combinedCumPct")]
   return render(request, "wrpt/classroom.html", context)
 
 def addProgramData (context, program, classrooms):
@@ -227,6 +231,7 @@ def addProgramData (context, program, classrooms):
     .select_related("classroom", "eventDate"))
   context["hasData"] = (len(map) > 0)
   if context["hasData"]:
+    context["dates"] = dates
     today = datetime.date.today()
     cdata = []
     for c in classrooms:
@@ -281,7 +286,9 @@ def program (request, id):
       "totalEnrollment": totalEnrollment }
     addProgramData(context, program, classrooms)
     if context["hasData"]:
-      context["graphSeries"] = [("Participation", "combinedCumPct")]
+      context["graphs"] = [{ "name": "chart", "yAxisLabel": "program",
+      "plotGoal": True,
+      "series": [("Participation", context["data"], "combinedCumPct")] }]
     return render(request, "wrpt/program-n.html", context)
 
 @staff_member_required
