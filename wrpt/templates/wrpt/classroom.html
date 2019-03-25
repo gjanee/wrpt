@@ -207,6 +207,7 @@ displays cumulative percentages over time.</p>
 <table class="table-header-rotated">
 <tr>
 <th></th>
+<th></th>
 {% for d in data|slice:slice %}
 {% comment %}
 The <div><span>...</span></div> goofiness is necessary for the styling
@@ -220,7 +221,8 @@ to work.
 </tr>
 {% if program.splitCounts %}
 <tr>
-<th class="left-header">Walk/bike %</th>
+<th class="left-header">Walk/bike</th>
+<th class="left-header">%</th>
 {% for d in data|slice:slice %}
 <td>
 {% if d.activePct != None %}
@@ -246,7 +248,8 @@ Absentees: {{ d.count.absentees }}
 {% endif %}
 </tr>
 <tr>
-<th class="left-header">Carpool/bus %</th>
+<th class="left-header">Carpool/bus</th>
+<th class="left-header">%</th>
 {% for d in data|slice:slice %}
 <td>
 {% if d.inactivePct != None %}
@@ -274,8 +277,9 @@ Absentees: {{ d.count.absentees }}
 {% endif %}
 <tr>
 <th class="left-header">
-{% if program.splitCounts %}Overall{% else %}Participant{% endif %} %
+{% if program.splitCounts %}Overall{% else %}Participant{% endif %}
 </th>
+<th class="left-header">%</th>
 {% for d in data|slice:slice %}
 <td>
 {% if d.combinedPct != None %}
