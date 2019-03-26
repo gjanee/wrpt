@@ -19,15 +19,6 @@ is necessary to reference the path indirectly.
 
 {% block subbody %}{% endblock %}
 
-<h2>Performance to date</h2>
-
-{% if hasData %}
-{% block table %}{% endblock %}
-<div id="program_chart" class="chart"></div>
-{% else %}
-<p>None.</p>
-{% endif %}
-
 <h2>Classroom standings</h2>
 
 {% if hasData and classroomDataRanked %}
@@ -35,6 +26,15 @@ is necessary to reference the path indirectly.
 <div id="standings_chart" class="chart"></div>
 {% else %}
 <p>No data yet.</p>
+{% endif %}
+
+<h2>Performance to date</h2>
+
+{% if hasData %}
+{% block table %}{% endblock %}
+<div id="program_chart" class="chart"></div>
+{% else %}
+<p>None.</p>
 {% endif %}
 
 {% endblock %}
