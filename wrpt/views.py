@@ -279,7 +279,23 @@ def addProgramData (context, program, classrooms):
     context["tableSlices"] = slices
 
 def addStandingsStatement (context):
-  return "" # TBD
+  ldquo, rdquo = "\u201C", "\u201D"
+  best = rank(context["classroomDataRanked"][0])
+  leaders = [t for t in context["classroomDataRanked"] if rank(t) == best]
+  if len(leaders) == 1:
+    who = "classroom %s%s%s leads" % (ldquo, leaders[0][0].name, rdquo)
+  else:
+    if len(leaders) == 2:
+      who = " and ".join("%s%s%s" % (ldquo, t[0].name, rdquo) for t in leaders)
+    else:
+      who = " ".join("%s%s,%s" % (ldquo, t[0].name, rdquo)\
+        for t in leaders[:-1]) +\
+        (" and %s%s%s" % (ldquo, leaders[-1][0].name, rdquo))
+    who = "classrooms %s are tied for the lead" % who
+  numEvents = context["data"].index(context["lastStats"]) + 1
+  context["standingsStatement"] = ("After %d event%s, %s with a " +\
+    "cumulative participation of %d%%.") %\
+    (numEvents, "s" if numEvents > 1 else "", who, best)
 
 def program (request, id):
   try:
