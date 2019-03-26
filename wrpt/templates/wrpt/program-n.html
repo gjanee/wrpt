@@ -12,8 +12,10 @@ Variables:
     data = [ProgramStats, ...]
     lastStats = ProgramStats # last entry in above not in future or None
     classroomData = [(classroom, lastStats, [ClassroomStats, ...]), ...]
+    classroomDataRanked = same
     tableSlices = [str, ...]
     graphs = [...] # see chart.html
+    standingsStatement = str
 {% endcomment %}
 
 {% block subbody %}
@@ -22,7 +24,7 @@ Variables:
 that classroom.
 {% if hasData %}
 The table displays participation percentages for individual event
-days. The graph displays cumulative percentages over time.
+days. The graphs display cumulative percentages over time.
 {% endif %}
 </p>
 
@@ -99,4 +101,8 @@ href="{% url "classroom" r.0.pk %}">{{ r.0 }}</a></th>
 </table>
 {% endfor %}
 
+{% endblock %}
+
+{% block standings %}
+<p>{{ standingsStatement }}</p>
 {% endblock %}

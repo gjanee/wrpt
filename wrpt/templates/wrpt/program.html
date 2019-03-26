@@ -23,9 +23,18 @@ is necessary to reference the path indirectly.
 
 {% if hasData %}
 {% block table %}{% endblock %}
-<div id="chart"></div>
+<div id="program_chart" class="chart"></div>
 {% else %}
 <p>None.</p>
+{% endif %}
+
+<h2>Classroom standings</h2>
+
+{% if hasData and classroomDataRanked %}
+{% block standings %}{% endblock %}
+<div id="standings_chart" class="chart"></div>
+{% else %}
+<p>No data yet.</p>
 {% endif %}
 
 {% endblock %}

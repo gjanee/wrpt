@@ -22,6 +22,7 @@ from wrpt.models import Classroom, Count, EventDate, Program
 from wrpt.forms import CountForm
 
 maximumTableWidth = 20 # columns
+maximumRankedClassrooms = 6
 
 def percentage (n, d):
   # Returns n/d as an integer percentage, safely.
@@ -223,6 +224,9 @@ def classroom (request, id):
         [("Participation", context["data"], "combinedCumPct")]
   return render(request, "wrpt/classroom.html", context)
 
+def rank (classroomDataTuple):
+  return classroomDataTuple[1].combinedCumPct
+
 def addProgramData (context, program, classrooms):
   dates = EventDate.objects.filter(
     schedule=program.schedule).order_by("date")
@@ -260,8 +264,12 @@ def addProgramData (context, program, classrooms):
     context["data"] = data
     if lastIndex >= 0:
       context["lastStats"] = context["data"][lastIndex]
+      context["classroomDataRanked"] = sorted(
+        [t for t in context["classroomData"] if rank(t) > 0],
+        key=lambda t: -rank(t))[:maximumRankedClassrooms]
     else:
       context["lastStats"] = None
+      context["classroomDataRanked"] = []
     # It's a pain to do slicing inside templates, so compute the table
     # slices here.
     slices = []
@@ -269,6 +277,9 @@ def addProgramData (context, program, classrooms):
       slices.append("%d:%d" % (i*maximumTableWidth,
         min((i+1)*maximumTableWidth, len(dates))))
     context["tableSlices"] = slices
+
+def addStandingsStatement (context):
+  return "" # TBD
 
 def program (request, id):
   try:
@@ -286,9 +297,15 @@ def program (request, id):
       "totalEnrollment": totalEnrollment }
     addProgramData(context, program, classrooms)
     if context["hasData"]:
-      context["graphs"] = [{ "name": "chart", "yAxisLabel": "program",
+      context["graphs"] = [{ "name": "program_chart", "yAxisLabel": "program",
       "plotGoal": True,
       "series": [("Participation", context["data"], "combinedCumPct")] }]
+      if len(context["classroomDataRanked"]) > 0:
+        context["graphs"].append({ "name": "standings_chart",
+        "yAxisLabel": "classroom", "plotGoal": False,
+        "series": [(classroom.name, l, "combinedCumPct")\
+        for classroom, _, l in context["classroomDataRanked"]] })
+        addStandingsStatement(context)
     return render(request, "wrpt/program-n.html", context)
 
 @staff_member_required
