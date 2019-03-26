@@ -216,9 +216,16 @@ def classroom (request, id):
       "plotGoal": True }]
     if classroom.program.splitCounts:
       context["graphs"][0]["series"] = [
+        ("Overall", context["data"], "combinedCumPct"),
         ("Walk/bike", context["data"], "activeCumPct"),
-        ("Carpool/bus", context["data"], "inactiveCumPct"),
-        ("Overall", context["data"], "combinedCumPct")]
+        ("Carpool/bus", context["data"], "inactiveCumPct")]
+      # Order the series by total to date... the overall value will
+      # always be largest.
+      if context["lastStats"] != None and\
+        context["lastStats"].inactiveCumPct >\
+        context["lastStats"].activeCumPct:
+        l = context["graphs"][0]["series"]
+        l[1], l[2] = l[2], l[1]
     else:
       context["graphs"][0]["series"] =\
         [("Participation", context["data"], "combinedCumPct")]
