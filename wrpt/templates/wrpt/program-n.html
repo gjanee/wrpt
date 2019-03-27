@@ -11,12 +11,16 @@ Variables:
     dates = [EventDate, ...]
     data = [ProgramStats, ...]
     lastStats = ProgramStats # last entry in above not in future or None
+    attr = str # category attribute
+    cumAttr = str # same, cumulative
     classroomData = [(classroom, lastStats, [ClassroomStats, ...]), ...]
     classroomDataRanked = same
     tableSlices = [str, ...]
     graphs = [...] # see chart.html
     standingsStatement = str
 {% endcomment %}
+
+{% load wrpt %}
 
 {% block subbody %}
 
@@ -77,12 +81,10 @@ to work.
 <th class="left-header overall-row">Program</th>
 <th class="left-header overall-row">%</th>
 {% for d in data|slice:slice %}
-<td class="overall-row">
-{% if d.combinedPct != None %}{{ d.combinedPct }}{% endif %}
-</td>
+<td class="overall-row">{% getattr_or_empty d attr %}</td>
 {% endfor %}
 {% if forloop.last %}
-<td class="overall-row">{{ lastStats.combinedCumPct }}</td>
+<td class="overall-row">{% getattr_or_empty lastStats cumAttr %}</td>
 {% endif %}
 </tr>
 {% for r in classroomData %}
@@ -91,10 +93,10 @@ to work.
 href="{% url "classroom" r.0.pk %}">{{ r.0 }}</a></th>
 <th class="left-header">%</th>
 {% for d in r.2|slice:slice %}
-<td>{% if d.combinedPct != None %}{{ d.combinedPct }}{% endif %}</td>
+<td>{% getattr_or_empty d attr %}</td>
 {% endfor %}
 {% if forloop.parentloop.last %}
-<td class="overall-row">{{ r.1.combinedCumPct }}</td>
+<td class="overall-row">{% getattr_or_empty r.1 cumAttr %}</td>
 {% endif %}
 </tr>
 {% endfor %}

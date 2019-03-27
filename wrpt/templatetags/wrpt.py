@@ -9,5 +9,9 @@ from django import template
 register = template.Library()
 
 @register.simple_tag
+def getattr_or_empty (object, attr):
+  return getattr(object, attr, "")
+
+@register.simple_tag
 def getattr_or_null (objectList, index, attr):
   return getattr(objectList[index], attr, "null")

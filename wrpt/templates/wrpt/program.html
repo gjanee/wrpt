@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% comment %}
+Variables:
+  program = Program
+  hasData = bool
+  if hasData:
+    classroomDataRanked = [tuple, ...]
+{% endcomment %}
+
 {% block javascript %}
 {% if hasData %}
 {% comment %}
@@ -22,6 +30,28 @@ is necessary to reference the path indirectly.
 <h2>Classroom standings</h2>
 
 {% if hasData and classroomDataRanked %}
+{% if program.splitCounts %}
+<table class="form">
+<tr>
+<th>Category</th>
+{% if category == "overall" %}
+<td><span class="selected">Overall</span></td>
+{% else %}
+<td><a href="{% url "program" program.pk %}">Overall</a></td>
+{% endif %}
+{% if category == "walk/bike" %}
+<td><span class="selected">Walk/bike</span></td>
+{% else %}
+<td><a href="{% url "program" program.pk %}?c=a">Walk/bike</a></td>
+{% endif %}
+{% if category == "carpool/bus" %}
+<td><span class="selected">Carpool/bus</span></td>
+{% else %}
+<td><a href="{% url "program" program.pk %}?c=i">Carpool/bus</a></td>
+{% endif %}
+</tr>
+</table>
+{% endif %}
 {% block standings %}{% endblock %}
 <div id="standings_chart" class="chart"></div>
 {% else %}
@@ -31,6 +61,28 @@ is necessary to reference the path indirectly.
 <h2>Performance to date</h2>
 
 {% if hasData %}
+{% if program.splitCounts %}
+<p><table class="form">
+<tr>
+<th>Category</th>
+{% if category == "overall" %}
+<td><span class="selected">Overall</span></td>
+{% else %}
+<td><a href="{% url "program" program.pk %}">Overall</a></td>
+{% endif %}
+{% if category == "walk/bike" %}
+<td><span class="selected">Walk/bike</span></td>
+{% else %}
+<td><a href="{% url "program" program.pk %}?c=a">Walk/bike</a></td>
+{% endif %}
+{% if category == "carpool/bus" %}
+<td><span class="selected">Carpool/bus</span></td>
+{% else %}
+<td><a href="{% url "program" program.pk %}?c=i">Carpool/bus</a></td>
+{% endif %}
+</tr>
+</table></p> {% comment %} The <p> improves the spacing. {% endcomment %}
+{% endif %}
 {% block table %}{% endblock %}
 <div id="program_chart" class="chart"></div>
 {% else %}

@@ -46,6 +46,10 @@ span.error {
   color: red;
 }
 
+span.selected {
+  font-weight: bold;
+}
+
 table.form th {
   text-align: right;
   padding-right: .5em;

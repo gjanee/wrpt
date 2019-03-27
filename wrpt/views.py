@@ -231,10 +231,10 @@ def classroom (request, id):
         [("Participation", context["data"], "combinedCumPct")]
   return render(request, "wrpt/classroom.html", context)
 
-def rank (classroomDataTuple):
-  return classroomDataTuple[1].combinedCumPct
+def rank (classroomDataTuple, cumAttr):
+  return getattr(classroomDataTuple[1], cumAttr)
 
-def addProgramData (context, program, classrooms):
+def addProgramData (context, program, classrooms, cumAttr):
   dates = EventDate.objects.filter(
     schedule=program.schedule).order_by("date")
   map = dict(((c.classroom.pk, c.eventDate.pk), c)\
@@ -272,8 +272,8 @@ def addProgramData (context, program, classrooms):
     if lastIndex >= 0:
       context["lastStats"] = context["data"][lastIndex]
       context["classroomDataRanked"] = sorted(
-        [t for t in context["classroomData"] if rank(t) > 0],
-        key=lambda t: -rank(t))[:maximumRankedClassrooms]
+        [t for t in context["classroomData"] if rank(t, cumAttr) > 0],
+        key=lambda t: -rank(t, cumAttr))[:maximumRankedClassrooms]
     else:
       context["lastStats"] = None
       context["classroomDataRanked"] = []
@@ -285,10 +285,11 @@ def addProgramData (context, program, classrooms):
         min((i+1)*maximumTableWidth, len(dates))))
     context["tableSlices"] = slices
 
-def addStandingsStatement (context):
+def addStandingsStatement (context, cumAttr):
   ldquo, rdquo = "\u201C", "\u201D"
-  best = rank(context["classroomDataRanked"][0])
-  leaders = [t for t in context["classroomDataRanked"] if rank(t) == best]
+  best = rank(context["classroomDataRanked"][0], cumAttr)
+  leaders = [t for t in context["classroomDataRanked"]\
+    if rank(t, cumAttr) == best]
   if len(leaders) == 1:
     who = "classroom %s%s%s leads" % (ldquo, leaders[0][0].name, rdquo)
   else:
@@ -315,20 +316,33 @@ def program (request, id):
   elif len(classrooms) == 1 and classrooms[0].name == "entire school":
     return redirect("classroom", id=classrooms[0].pk)
   else:
+    if request.GET.get("c") == "a":
+      category = "walk/bike"
+      attr = "activePct"
+      cumAttr = "activeCumPct"
+    elif request.GET.get("c") == "i":
+      category = "carpool/bus"
+      attr = "inactivePct"
+      cumAttr = "inactiveCumPct"
+    else:
+      category = "overall"
+      attr = "combinedPct"
+      cumAttr = "combinedCumPct"
     totalEnrollment = sum(c.enrollment for c in classrooms)
     context = { "program": program, "classrooms": classrooms,
-      "totalEnrollment": totalEnrollment }
-    addProgramData(context, program, classrooms)
+      "category": category, "totalEnrollment": totalEnrollment,
+      "attr": attr, "cumAttr": cumAttr }
+    addProgramData(context, program, classrooms, cumAttr)
     if context["hasData"]:
       context["graphs"] = [{ "name": "program_chart", "yAxisLabel": "program",
       "plotGoal": True,
-      "series": [("Participation", context["data"], "combinedCumPct")] }]
+      "series": [("Participation", context["data"], cumAttr)] }]
       if len(context["classroomDataRanked"]) > 0:
         context["graphs"].append({ "name": "standings_chart",
         "yAxisLabel": "classroom", "plotGoal": False,
-        "series": [(classroom.name, l, "combinedCumPct")\
+        "series": [(classroom.name, l, cumAttr)\
         for classroom, _, l in context["classroomDataRanked"]] })
-        addStandingsStatement(context)
+        addStandingsStatement(context, cumAttr)
     return render(request, "wrpt/program-n.html", context)
 
 @staff_member_required
