@@ -1,6 +1,8 @@
 {% comment %}
 Variables:
   program.participationGoal = int|none
+  program.splitCounts = bool
+  category = str
   dates = [EventDate, ...]
   graphs = [{
     name = str # div name
@@ -42,7 +44,11 @@ function drawChart_{{ g.name }} () {
 {% endwith %}
 
   var options = {
+    {% if program.splitCounts and category %}
+    title: "Cumulative performance - {{ category|escapejs }}",
+    {% else %}
     title: "Cumulative performance",
+    {% endif %}
     backgroundColor: { fill: "#F7FAFD", strokeWidth: 2 },
     hAxis: { title: "Event date" },
     vAxis: { title: "{{ g.yAxisLabel|capfirst }} percentage",
