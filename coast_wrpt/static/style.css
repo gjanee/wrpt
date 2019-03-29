@@ -70,6 +70,39 @@ table.form td {
   height: 500px;
 }
 
+/* Tabs */
+
+table.tabs {
+  border-collapse: collapse;
+}
+
+table.tabs th {
+  padding-right: .5em;
+}
+
+table.tabs td {
+  font-weight: bold;
+  border: 1px solid black;
+  padding-left: 1em;
+  padding-right: 1em;
+  cursor: pointer;
+}
+
+table.tabs td.selected {
+  background: #616161;
+  color: white;
+}
+
+table.tabs td:hover {
+  background: #CCCCCC;
+  color: black;
+}
+
+table.tabs a {
+  color: black;
+  text-decoration: none;
+}
+
 /* Table header rotation courtesy of
 ** http://jimmybonney.com/articles/column_header_rotation_css/
 */
@@ -164,6 +197,10 @@ table.form td {
   border-radius: 6px;
   position: absolute;
   z-index: 1;
+}
+
+.tooltip:hover {
+  cursor: pointer;
 }
 
 .tooltip:hover .tooltiptext {

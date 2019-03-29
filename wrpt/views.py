@@ -12,7 +12,6 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.db.models import Sum
 
-from collections import namedtuple
 import csv
 import datetime
 import io

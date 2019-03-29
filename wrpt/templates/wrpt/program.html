@@ -27,30 +27,30 @@ is necessary to reference the path indirectly.
 
 {% block subbody %}{% endblock %}
 
-<h2>Performance to date</h2>
+<h2><a name="ptd">Performance to date</a></h2>
 
 {% if hasData %}
 {% if program.splitCounts %}
-<p><table class="form">
+<table class="tabs">
 <tr>
-<th>Category</th>
+<th>Displaying category:</th>
 {% if category == "overall" %}
-<td><span class="selected">Overall</span></td>
+<td class="selected">Overall</td>
 {% else %}
-<td><a href="{% url "program" program.pk %}">Overall</a></td>
+<td><a href="{% url "program" program.pk %}#ptd">Overall</a></td>
 {% endif %}
 {% if category == "walk/bike" %}
-<td><span class="selected">Walk/bike</span></td>
+<td class="selected">Walk/bike</td>
 {% else %}
-<td><a href="{% url "program" program.pk %}?c=a">Walk/bike</a></td>
+<td><a href="{% url "program" program.pk %}?c=a#ptd">Walk/bike</a></td>
 {% endif %}
 {% if category == "carpool/bus" %}
-<td><span class="selected">Carpool/bus</span></td>
+<td class="selected">Carpool/bus</td>
 {% else %}
-<td><a href="{% url "program" program.pk %}?c=i">Carpool/bus</a></td>
+<td><a href="{% url "program" program.pk %}?c=i#ptd">Carpool/bus</a></td>
 {% endif %}
 </tr>
-</table></p> {% comment %} The <p> improves the spacing. {% endcomment %}
+</table>
 {% endif %}
 {% block table %}{% endblock %}
 <div id="program_chart" class="chart"></div>
@@ -58,27 +58,27 @@ is necessary to reference the path indirectly.
 <p>None.</p>
 {% endif %}
 
-<h2>Classroom standings</h2>
+<h2><a name="cs">Classroom standings</a></h2>
 
 {% if hasData and classroomDataRanked %}
 {% if program.splitCounts %}
-<table class="form">
+<table class="tabs">
 <tr>
-<th>Category</th>
+<th>Displaying category:</th>
 {% if category == "overall" %}
-<td><span class="selected">Overall</span></td>
+<td class="selected">Overall</td>
 {% else %}
-<td><a href="{% url "program" program.pk %}">Overall</a></td>
+<td><a href="{% url "program" program.pk %}#cs">Overall</a></td>
 {% endif %}
 {% if category == "walk/bike" %}
-<td><span class="selected">Walk/bike</span></td>
+<td class="selected">Walk/bike</td>
 {% else %}
-<td><a href="{% url "program" program.pk %}?c=a">Walk/bike</a></td>
+<td><a href="{% url "program" program.pk %}?c=a#cs">Walk/bike</a></td>
 {% endif %}
 {% if category == "carpool/bus" %}
-<td><span class="selected">Carpool/bus</span></td>
+<td class="selected">Carpool/bus</td>
 {% else %}
-<td><a href="{% url "program" program.pk %}?c=i">Carpool/bus</a></td>
+<td><a href="{% url "program" program.pk %}?c=i#cs">Carpool/bus</a></td>
 {% endif %}
 </tr>
 </table>
