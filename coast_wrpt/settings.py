@@ -6,8 +6,6 @@
 
 import os
 
-import django_heroku
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if os.environ.get("WRPT_DEBUG", "0") == "1":
@@ -89,4 +87,6 @@ LOGGING = {
   }
 }
 
-django_heroku.settings(locals(), logging=False)
+if os.environ.get("WRPT_USE_SQLITE3", "0") != "1":
+  import django_heroku
+  django_heroku.settings(locals(), logging=False)
