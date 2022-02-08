@@ -23,9 +23,10 @@ provides some graphs that show a classroom how it ranks in relation to
 others.
 
 A running instance of WRPT can be found at
-http://www.coast-walknroll.org, sponsored by and for the benefit of
-the [Coalition for Sustainable Transportation
-(COAST)](http://coast-santabarbara.org) in Santa Barbara, California.
+~~http://<span>www.</span><span>coast-walknroll</span><span>.org</span>~~
+https://still-depths-8930.herokuapp.com/, sponsored by and for the
+benefit of the Coalition for Sustainable Transportation (COAST) in
+Santa Barbara, California.
 
 WRPT is a [Django](https://www.djangoproject.com) application
 configured to be run under [Gunicorn](https://gunicorn.org) and hosted
@@ -58,7 +59,8 @@ Set up a virtual environment:
 * `source venv/bin/activate.csh` (if using Csh)
 
 It will be necessary to activate the virtual environment every time
-logging in.  Next, install software dependencies:
+logging in.  Next, install software dependencies (note the comment in
+`requirements.txt` if not using PostgreSQL):
 
 * `pip install -r requirements.txt`
 
