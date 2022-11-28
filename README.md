@@ -23,10 +23,9 @@ provides some graphs that show a classroom how it ranks in relation to
 others.
 
 A running instance of WRPT can be found at
-~~http://<span>ww</span><span>w.coast-walknroll.o</span><span>rg</span>~~
-https://still-depths-8930.herokuapp.com/, sponsored by and for the
-benefit of the Coalition for Sustainable Transportation (COAST) in
-Santa Barbara, California.
+~~http://<span>ww</span><span>w.coast-walknroll.o</span><span>rg</span>~~,
+sponsored by and for the benefit of the Coalition for Sustainable
+Transportation (COAST) in Santa Barbara, California.
 
 WRPT is a [Django](https://www.djangoproject.com) application
 configured to be run under [Gunicorn](https://gunicorn.org) and hosted
